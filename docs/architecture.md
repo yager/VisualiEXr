@@ -67,6 +67,8 @@ TimeDomain ─────────────┴─▶ FeatureEngine.update
 | [`src/hosts/standalone/control.ts`](../src/hosts/standalone/control.ts) | スタンドアロン操作：別ウィンドウのデバイス選択/切替UI |
 | [`src/hosts/standalone/bus.ts`](../src/hosts/standalone/bus.ts) | 出力⇔操作ウィンドウ間のメッセージ定義 |
 | [`electron/main.cjs`](../electron/main.cjs) | Electron メイン：localhost 配信＋出力/操作の2ウィンドウ |
+| [`src/hosts/web/main.ts`](../src/hosts/web/main.ts) | Webホスト：マイク/タブ音声入力＋全画面出力＋同一ページ内オーバーレイUI（GitHub Pages等の静的配信向け。フォルダプラグインは呼ばない） |
+| [`src/hosts/web/index.html`](../src/hosts/web/index.html) | Webホストのランディング（ヒーロー・内蔵プラグイン一覧・導線・デモ用オーバーレイDOM） |
 
 > 各フィールドの範囲・意味・描画ヒントの一覧は [features.md](features.md) を参照。
 
@@ -96,9 +98,10 @@ TimeDomain ─────────────┴─▶ FeatureEngine.update
 - **ホスト（src/hosts/）**：この2つの端（入力＝どの音、出力＝どこに描く）を用意して App に渡す層。
   - 拡張：video 入力 ＋ VideoStage ＋ ⚙オーバーレイ（ControlPanel）
   - スタンドアロン：マイク/デバイス入力 ＋ WindowStage ＋ 別ウィンドウの操作UI
+  - Web：マイク/タブ音声入力 ＋ WindowStage ＋ 同一ページ内オーバーレイUI（静的配信・フォルダプラグイン無し）
 
 > **コア（audio / visualizers / app）は入力・出力に依存しない**ので、ホストを足すだけで
-> YouTube・スタンドアロン（プロジェクタ/OBS）など出力先を増やせる。
+> YouTube・スタンドアロン（プロジェクタ/OBS）・Web（静的ホスティングのライブデモ）など出力先を増やせる。
 
 ### なぜ音声グラフを作り直さないか（重要）
 `createMediaElementSource()` は **1つの `<video>` につき一度しか呼べない**（二度目は例外）。

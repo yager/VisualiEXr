@@ -1,6 +1,7 @@
 node_modules/
 dist-extension/
 dist-app/
+dist-web/
 src/app/plugins.generated.ts
 
 # OS / editor

@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VisualiEXr — 音に反応するビジュアライザ / Audio-reactive Visualizer</title>
+<meta name="description" content="マイクやタブの音に反応するビジュアライザをブラウザだけで試せるライブデモ。インストール不要。">
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #0a0a0f;
+    --fg: #f2f2f7;
+    --muted: #9797a8;
+    --accent: #6ee7ff;
+    --accent2: #ff6ec7;
+    --card: #14141c;
+    --border: #2a2a36;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; background: var(--bg); color: var(--fg);
+    font-family: system-ui, -apple-system, "Segoe UI", "Hiragino Sans", "Noto Sans JP", sans-serif;
+    overflow-x: hidden;
+  }
+  a { color: var(--accent); }
+
+  #landing { max-width: 920px; margin: 0 auto; padding: 0 20px 64px; }
+
+  .hero {
+    padding: 72px 0 40px;
+    text-align: center;
+  }
+  .hero h1 {
+    font-size: clamp(2rem, 5vw, 3rem);
+    margin: 0 0 12px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .hero p.lead {
+    font-size: 1.05rem; color: var(--muted); max-width: 640px; margin: 0 auto 8px;
+  }
+  .hero p.lead.en { font-size: 0.92rem; margin-bottom: 28px; }
+
+  .cta-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 20px; }
+  button.cta {
+    font: inherit; cursor: pointer; border-radius: 999px; border: none;
+    padding: 14px 28px; font-size: 1rem; font-weight: 600;
+  }
+  button.cta.primary {
+    background: linear-gradient(90deg, var(--accent), var(--accent2)); color: #0a0a0f;
+  }
+  button.cta.secondary {
+    background: transparent; color: var(--fg); border: 1px solid var(--border);
+  }
+  button.cta:hover { filter: brightness(1.1); }
+  button.cta:disabled { opacity: 0.5; cursor: default; }
+
+  #status { min-height: 1.4em; text-align: center; color: var(--muted); font-size: 0.85rem; margin-top: 14px; }
+
+  section.block { margin-top: 48px; }
+  section.block h2 { font-size: 1.3rem; margin-bottom: 4px; }
+  section.block h2 .en { font-weight: 400; color: var(--muted); font-size: 0.85rem; display: block; }
+
+  #plugin-list {
+    list-style: none; padding: 0; margin: 16px 0 0;
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px;
+  }
+  #plugin-list li {
+    background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+    padding: 12px 14px; font-size: 0.88rem; color: var(--muted);
+  }
+  #plugin-list li strong { color: var(--fg); }
+
+  .notes {
+    background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+    padding: 16px 18px; font-size: 0.85rem; color: var(--muted); line-height: 1.7;
+  }
+  .notes ul { margin: 8px 0 0; padding-left: 20px; }
+
+  footer.links {
+    margin-top: 56px; padding-top: 24px; border-top: 1px solid var(--border);
+    display: flex; flex-wrap: wrap; gap: 10px 20px; font-size: 0.85rem; color: var(--muted);
+    justify-content: center;
+  }
+
+  /* --- デモ実行中のオーバーレイ --- */
+  #overlay[hidden] { display: none; }
+  #overlay {
+    position: fixed; top: 14px; right: 14px; z-index: 10000;
+    background: rgba(10, 10, 15, 0.72); backdrop-filter: blur(8px);
+    border: 1px solid var(--border); border-radius: 12px;
+    padding: 12px 14px; display: flex; flex-direction: column; gap: 8px;
+    min-width: 200px; color: var(--fg);
+    font-family: system-ui, sans-serif; font-size: 0.85rem;
+  }
+  #overlay select, #overlay button {
+    font: inherit; padding: 6px 8px; border-radius: 6px; border: 1px solid var(--border);
+    background: #1c1c26; color: var(--fg); cursor: pointer;
+  }
+  #overlay .row { display: flex; gap: 6px; }
+  #overlay .row button { flex: 1; }
+</style>
+</head>
+<body>
+
+<div id="landing">
+  <section class="hero">
+    <h1>VisualiEXr</h1>
+    <p class="lead">音にあわせて動くグラフィックをブラウザだけで。インストール不要、URLを開けばすぐ試せます。</p>
+    <p class="lead en">Audio-reactive visuals, right in your browser. No install — just open the URL and try it.</p>
+    <div class="cta-row">
+      <button id="btn-start-mic" class="cta primary">▶ デモを試す（マイク許可）/ Try the Live Demo (mic)</button>
+      <button id="btn-start-tab" class="cta secondary">🖥 タブ音声で試す（Chrome）/ Try with Tab Audio (Chrome)</button>
+    </div>
+    <div id="status"></div>
+  </section>
+
+  <section class="block">
+    <h2>内蔵ビジュアライザ<span class="en">Built-in Visualizers</span></h2>
+    <ul id="plugin-list"></ul>
+  </section>
+
+  <section class="block">
+    <h2>注記<span class="en">Notes</span></h2>
+    <div class="notes">
+      <ul>
+        <li>このライブデモは <strong>マイク／タブ音声</strong> に反応します。YouTube 動画への直接重ね表示は Chrome 拡張版の機能で、Web版にはありません。<br>
+          <span style="opacity:.8">This demo reacts to mic / tab audio. Overlaying directly on YouTube videos is a Chrome-extension-only feature, not available here.</span></li>
+        <li>タブ音声の取得（<code>getDisplayMedia</code>）は主に Chrome 系ブラウザ向けです。非対応ブラウザではマイクのみお使いください。<br>
+          <span style="opacity:.8">Tab-audio capture is Chrome-centric; unsupported browsers can still use the microphone.</span></li>
+        <li>音声は解析のみに使われ、サーバーへ送信・保存されません（すべてブラウザ内で完結）。<br>
+          <span style="opacity:.8">Audio is analyzed locally only — nothing is uploaded or stored.</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <footer class="links">
+    <a href="https://chrome.google.com/webstore" target="_blank" rel="noopener">Chrome ウェブストア（準備中）/ Chrome Web Store (TBD)</a>
+    <a href="https://github.com/yager/VisualiEXr/releases" target="_blank" rel="noopener">Electron版 / Desktop Releases</a>
+    <a href="https://github.com/yager/VisualiEXr" target="_blank" rel="noopener">GitHub リポジトリ</a>
+    <a href="https://github.com/yager/VisualiEXr/tree/main/docs" target="_blank" rel="noopener">ドキュメント / Docs</a>
+  </footer>
+</div>
+
+<div id="overlay" hidden>
+  <select id="visualizer-select"></select>
+  <div class="row">
+    <button id="btn-fullscreen">⛶ 全画面 / Fullscreen</button>
+  </div>
+  <div class="row">
+    <button id="btn-off">■ Off</button>
+  </div>
+</div>
+
+<script src="main.js"></script>
+</body>
+</html>

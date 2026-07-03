@@ -9,7 +9,8 @@
     "typecheck": "node gen-plugins.mjs && tsc -p tsconfig.json",
     "build": "node build.mjs",
     "watch": "node build.mjs --watch",
-    "start": "node build.mjs && electron electron/main.cjs"
+    "start": "node build.mjs && electron electron/main.cjs",
+    "serve:web": "npx serve dist-web"
   },
   "devDependencies": {
     "@types/chrome": "^0.2.0",
