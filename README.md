@@ -1,96 +1,100 @@
+**English** | [日本語](README.ja.md)
+
 # VisualiEXr
 
-YouTube で再生中の動画の**音にあわせて動くグラフィック（ビジュアライザ）**を画面に重ねて表示する Chrome 拡張です（名前は "Visualizer" を拡張の "EX" で文字ったもので、読みは「ビジュアライザー」）。同じコアで動くスタンドアロン（Electron）版も同梱しています。
+**[▶ Try the live demo](https://yager.github.io/VisualiEXr/)** — no install required, reacts to your microphone/tab audio right in the browser.
 
-「いろいろなビジュアライザを**プラグイン的に自由に追加できる**」ことを目標に、既存の拡張を参考にしながらゼロから作っています。
+VisualiEXr is a Chrome extension that overlays **graphics that react to the audio of the YouTube video you're watching** (the name is a play on "Visualizer" with the extension's "EX", pronounced "visualizer"). The same core also powers a standalone (Electron) build and a browser-only web demo — no install needed for the latter.
 
-中心にあるのは、**音を扱いやすい数値に変換してからプラグインへ渡す**という一本の流れです。
+The goal is to make it possible to **freely add visualizers as plugins**, and it's built from scratch while taking cues from existing extensions.
+
+At the center of it all is a single, simple flow: **convert the audio into easy-to-use numbers before handing them to plugins**.
 
 ```
-YouTube の音 → 特徴量エンジン → AudioFeatures（0〜1 に正規化した数値セット） → プラグインが描画
+YouTube audio → feature engine → AudioFeatures (a value set normalized to 0–1) → plugin draws
 ```
 
-プラグインは音響解析を一切知らなくてよく、`features.bass * canvas.height` のように**数値を掛けるだけ**で音に反応する絵が描けます。
+Plugins don't need to know anything about audio analysis — you can draw something that reacts to sound just by **multiplying a number**, e.g. `features.bass * canvas.height`.
 
 ---
 
-## クイックスタート
+## Quick start
 
-3つのホストがあります。`npm install` → `npm run build` で全て出力されます（`dist-extension/`＝拡張、`dist-app/`＝Electron、`dist-web/`＝Webデモ）。
+There are three hosts. `npm install` → `npm run build` outputs all of them (`dist-extension/` = extension, `dist-app/` = Electron, `dist-web/` = web demo).
 
-### A. Chrome 拡張（YouTube 重ね）
-1. Chrome で `chrome://extensions` → 「デベロッパーモード」ON
-2. 「パッケージ化されていない拡張機能を読み込む」→ `dist-extension/` を選ぶ
-3. YouTube で再生 → **動画右上の ⚙** でビジュアライザ切替 / **Off**。選択は保存され次回も復元。
+### A. Chrome extension (YouTube overlay)
+1. In Chrome, go to `chrome://extensions` → turn on "Developer mode"
+2. Click "Load unpacked" → select `dist-extension/`
+3. Play something on YouTube → use the **⚙ in the top-right of the video** to switch visualizers / turn it **Off**. Your selection is saved and restored next time.
 
-### B. スタンドアロン（VJ / プロジェクタ / OBS）
+### B. Standalone (VJ / projector / OBS)
 ```bash
-npm install   # 初回のみ（electron を含む）
-npm start     # ビルド → Electron 起動（出力ウィンドウ＋操作ウィンドウ）
+npm install   # once, includes electron
+npm start     # build → launch Electron (output window + control window)
 ```
-- **出力ウィンドウ**＝全画面キャンバス（プロジェクタ or OBS のウィンドウキャプチャへ）
-- **操作ウィンドウ**＝手元だけ。入力デバイス選択・切替・Off（観客に見せない）
-- 完全ローカル（localhost・ネット不要）。マイク/ライン/仮想デバイス（BlackHole 等）から入力
+- **Output window** = fullscreen canvas (for a projector, or an OBS window capture)
+- **Control window** = for your eyes only. Select input device, switch visualizers, Off (not shown to the audience)
+- Fully local (localhost, no network needed). Takes input from a microphone/line-in/virtual device (e.g. BlackHole)
 
-### C. Web版ライブデモ（インストール不要）
-GitHub Pages 等の静的ホスティングで動く、マイク/タブ音声反応のデモ＋公式ランディング（`src/hosts/web/`）。
+### C. Web live demo (no install)
+A demo plus official landing page that runs on static hosting such as GitHub Pages, reacting to microphone/tab audio (`src/hosts/web/`).
 ```bash
 npm run build
-npm run serve:web   # = npx serve dist-web（ローカル確認用）
+npm run serve:web   # = npx serve dist-web (for local checks)
 ```
-GitHub Pages への公開は [`.github/workflows/deploy-web.yml`](.github/workflows/deploy-web.yml) を参照
-（要・人間の作業: リポジトリの Settings > Pages > Source を "GitHub Actions" に変更）。
+See [`.github/workflows/deploy-web.yml`](.github/workflows/deploy-web.yml) for publishing to GitHub Pages
+(requires a one-time manual step: set the repository's Settings > Pages > Source to "GitHub Actions").
 
-型チェックは `npm run typecheck`。**プラグインは [`src/visualizers/`](src/visualizers) に `〜Visualizer.ts` を足してビルドするだけ**で自動で一覧に並びます（作り方は [docs/architecture.md](docs/architecture.md#新しいプラグインの作り方)）。
+Type checking: `npm run typecheck`. **To add a plugin, just drop a `~Visualizer.ts` file into [`src/visualizers/`](src/visualizers) and build** — it's automatically added to the list (see [docs/architecture.md](docs/architecture.md#how-to-add-a-new-plugin) for how).
 
 ---
 
-## ドキュメント
+## Documentation
 
-| ドキュメント | 内容 |
+| Document | Content |
 |------|------|
-| [docs/audio-basics.md](docs/audio-basics.md) | **音の基礎知識**（周波数・FFT・倍音・対数・キー・リズムなど）。音楽が専門でなくても上から順に読める入門。 |
-| [docs/visualizer-basics.md](docs/visualizer-basics.md) | **描画の基礎知識**（シェーダ・WebGL・GLSL・three.js/PixiJS・パーティクル等）。Web開発者向けにCG/ゲーム畑の語彙を解説。 |
-| [docs/features.md](docs/features.md) | **AudioFeatures リファレンス**。プラグインに渡る数値セットの完全な定義とデバッグ表示の説明。 |
-| [docs/architecture.md](docs/architecture.md) | **設計**。特徴量エンジン・正規化の方針・プラグイン機構・ビルド/動作。 |
-| [docs/original-extension.md](docs/original-extension.md) | 参考にした**元拡張の解析メモ**。 |
+| [docs/audio-basics.md](docs/audio-basics.md) (Japanese) | **Audio fundamentals** (frequency, FFT, harmonics, logarithms, key, rhythm, etc.). An introduction you can read top to bottom even without a music background. |
+| [docs/visualizer-basics.md](docs/visualizer-basics.md) (Japanese) | **Rendering fundamentals** (shaders, WebGL, GLSL, three.js/PixiJS, particles, etc.). Explains CG/game-dev vocabulary for web developers. |
+| [docs/features.md](docs/features.md) | **AudioFeatures reference**. The complete definition of the value set passed to plugins, plus an explanation of the debug display. |
+| [docs/architecture.md](docs/architecture.md) | **Design**. The feature engine, normalization policy, plugin mechanism, build/runtime. |
+| [docs/original-extension.md](docs/original-extension.md) (Japanese) | Notes on the **original extension** this project drew inspiration from. |
 
-まず音の仕組みを知りたい → audio-basics、リッチな描画（シェーダ/WebGL）を知りたい → visualizer-basics、使える材料を知りたい → features、作りの中身を知りたい → architecture、の順が読みやすいです。
+If you want to understand the sound side first, start with audio-basics; for rich rendering (shaders/WebGL), visualizer-basics; for the available materials, features; and for the internals, architecture. Reading in that order tends to work well.
 
 ---
 
-## リポジトリ構成（概要）
+## Repository layout (overview)
 
-| パス | 役割 |
+| Path | Role |
 |------|------|
-| `src/audio/` | 特徴量エンジン（`FeatureEngine` → `AudioFeatures`）と補助（`AutoGain` / `TempoTracker`） |
-| `src/visualizers/` | プラグインと契約（`Visualizer`）＋サンプル（`Analyzer` / `Bars` / `Circle` / `Plasma Scope` / `Plasma Ball` / `Lo-Fi Rain` / `Flow Field` / `PixiNeon` / `Fireworks` / `ThreeTerrain` / `Cyber Flight` / `EQ Field` / `Kaleido Glass` / `Chroma Flow` / `Tunnel` / `Water Caustics`） |
-| `src/app/` | 実行コア（入力/出力非依存）。`AudioGraph` / `Stage`（`VideoStage`/`WindowStage`）/ `VisualizerApp` / `registry` |
-| `src/hosts/extension/` | 拡張ホスト（YouTube の video 入力＋動画重ね） |
-| `src/hosts/standalone/` | スタンドアロンホスト（マイク入力＋全画面出力＋操作ウィンドウ） |
-| `src/hosts/web/` | Webホスト（GitHub Pages等の静的配信・マイク/タブ音声入力＋単一ページのランディング兼デモ） |
-| `electron/main.cjs` | Electron メイン（localhost 配信＋2ウィンドウ） |
-| `public/manifest.json`, `build.mjs`, `gen-plugins.mjs` | 拡張マニフェスト・esbuild ビルド・プラグイン自動登録 |
+| `src/audio/` | The feature engine (`FeatureEngine` → `AudioFeatures`) and helpers (`AutoGain` / `TempoTracker`) |
+| `src/visualizers/` | Plugins and their contract (`Visualizer`), plus samples (`Analyzer` / `Bars` / `Circle` / `Plasma Scope` / `Plasma Ball` / `Lo-Fi Rain` / `Flow Field` / `PixiNeon` / `Fireworks` / `ThreeTerrain` / `Cyber Flight` / `EQ Field` / `Kaleido Glass` / `Chroma Flow` / `Tunnel` / `Water Caustics`) |
+| `src/app/` | The runtime core (input/output-agnostic): `AudioGraph` / `Stage` (`VideoStage`/`WindowStage`) / `VisualizerApp` / `registry` |
+| `src/hosts/extension/` | The extension host (YouTube video input + video overlay) |
+| `src/hosts/standalone/` | The standalone host (microphone input + fullscreen output + control window) |
+| `src/hosts/web/` | The web host (static hosting such as GitHub Pages, microphone/tab-audio input + a single-page landing page and demo) |
+| `electron/main.cjs` | The Electron main process (serves over localhost + two windows) |
+| `public/manifest.json`, `build.mjs`, `gen-plugins.mjs` | The extension manifest, esbuild build, and automatic plugin registration |
 
-新しいビジュアライザの作り方は [docs/architecture.md](docs/architecture.md#新しいプラグインの作り方) を参照してください。
-
----
-
-## ライセンス
-
-MIT License（[LICENSE](LICENSE)）。自由に使用・改変・再配布・商用利用できます（著作権表示の同梱のみ条件・無保証）。
-プラグインも同じ精神で、`author` にクレジットを入れて自由に書いて配れます。
-
-同梱するサードパーティ製ライブラリ（three.js / PixiJS / pixi-filters、いずれも MIT）の帰属表示は
-[THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md) にまとめています。
+See [docs/architecture.md](docs/architecture.md#how-to-add-a-new-plugin) for how to write a new visualizer.
 
 ---
 
-## 支援・スポンサー
+## License
 
-VisualiEXr は無料・オープンソースです。開発の継続を応援いただける場合は、任意の寄付を歓迎します（対価はありません）。
+MIT License ([LICENSE](LICENSE)). Free to use, modify, redistribute, and use commercially (the only condition is including the copyright notice; no warranty).
+Plugins are welcome in the same spirit — add your credit in `author` and share freely.
 
-- 寄付（Stripe）：<https://donate.stripe.com/7sY3cw6r7aaI7rIczv18c00>
-- GitHub Sponsors：リポジトリ上部の **Sponsor** ボタンから（有効化後）
+Attribution for the bundled third-party libraries (three.js / PixiJS / pixi-filters, all MIT) is collected in
+[THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md).
 
-法的表記は Web版（GitHub Pages）の [プライバシーポリシー / 利用規約 / 特定商取引法に基づく表記](https://yager.github.io/VisualiEXr/legal/support/) を参照してください。
+---
+
+## Support & sponsorship
+
+VisualiEXr is free and open source. If you'd like to support continued development, donations of any amount are welcome (no goods or services are provided in return).
+
+- Donate (Stripe): <https://donate.stripe.com/7sY3cw6r7aaI7rIczv18c00>
+- GitHub Sponsors: via the **Sponsor** button at the top of the repository (once enabled)
+
+For legal notices, see the web version's (GitHub Pages) [privacy policy / terms of use / commercial transactions act disclosure](https://yager.github.io/VisualiEXr/legal/support/).

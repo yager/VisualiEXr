@@ -1,157 +1,159 @@
-# AudioFeatures リファレンス（実装された数値セットの定義）
+[日本語](features.ja.md) | **English**
 
-[`FeatureEngine`](../src/audio/FeatureEngine.ts) が毎フレーム生成し、プラグインの `draw(features, ctx)` に渡される数値セットの**完全な定義**です。型は [`AudioFeatures.ts`](../src/audio/AudioFeatures.ts)。
+# AudioFeatures reference (definition of the implemented value set)
 
-音の用語（周波数・スペクトラム・FFT・ビン・倍音・対数など）が分からない場合は、先に [audio-basics.md](audio-basics.md) を読んでください。
+The **complete definition** of the value set that [`FeatureEngine`](../src/audio/FeatureEngine.ts) produces every frame and passes to a plugin's `draw(features, ctx)`. The type is [`AudioFeatures.ts`](../src/audio/AudioFeatures.ts).
 
-凡例:
-- **範囲**：とり得る値の範囲。
-- **平滑化**：「あり」= EMA でなめらか（ゆったりした演出向き）／「なし」= 鋭い瞬間値（拍・アタック向き）。
-- **正規化**：0〜1 にする方法（[architecture.md](architecture.md) の方針を参照）。
+If you're not familiar with audio terms (frequency, spectrum, FFT, bins, harmonics, logarithms, etc.), read [audio-basics.md](audio-basics.md) (Japanese) first.
+
+Legend:
+- **Range**: the range of values it can take.
+- **Smoothing**: "yes" = smoothed via EMA (good for slow, relaxed effects) / "no" = a sharp instantaneous value (good for beats/attacks).
+- **Normalization**: how it's mapped to 0–1 (see the policy in [architecture.md](architecture.md)).
 
 ---
 
-## スカラー値（数値ひとつ）
+## Scalar values (single numbers)
 
-| フィールド | 型 | 範囲 | 平滑化 | 正規化 | 意味 / 描画のヒント |
+| Field | Type | Range | Smoothing | Normalization | Meaning / rendering hint |
 |------|------|------|------|------|------|
-| `rms` | number | 0〜1 | あり | オートゲイン | **全体の音量感**。映像全体のスケール・明るさに。 |
-| `peak` | number | 0〜1 | なし | 有界(≤1) | **その瞬間の最大振れ幅**。急な大音量でフラッシュ。 |
-| `bass` | number | 0〜1 | あり | ÷255 | **低音**（既定 20〜150Hz）。ベース・バスドラム帯。背景の脈動に。 |
-| `mid` | number | 0〜1 | あり | ÷255 | **中音**（既定 150〜2000Hz）。ボーカル・主要楽器帯。 |
-| `treble` | number | 0〜1 | あり | ÷255 | **高音**（既定 2k〜16kHz）。シンバル・ハイハット帯。粒子に。 |
-| `brightness` | number | 0〜1 | あり | ÷binCount | **音の明るさ**（セントロイド）。高音が多いほど大。色相に。 |
-| `flux` | number | 0〜1 | あり | オートゲイン | **音の変化量**（なめらか版）。動きの激しさ。 |
-| `impulse` | number | 0〜1 | なし | オートゲイン | **立ち上がりの鋭さ**（フラックスの鋭い版）。拍の種。 |
-| `rolloff` | number | 0〜1 | あり | 割合(≤1) | **音の上の広がり**。エネルギーの85%が収まる高さの割合。 |
-| `flatness` | number | 0〜1 | あり | 幾何/算術(≤1) | **ノイズ寄り(1)⇄澄んだ音寄り(0)**。質感の切替に。 |
-| `noisiness` | number | 0〜1 | あり | 割合(≤1) | **ザラつき・高音っぽさ**（ゼロクロス率）。 |
-| `loudestHz` | number | 0〜約16000 | なし | **生値(Hz)** | **いちばん強い音の高さ**。※ここだけ正規化しない。 |
-| `tonalAngle` | number | 0〜1（循環） | あり | 五度圏角度 | **調性の向き**。chroma を五度圏で1方向にまとめた角度。色相・回転角などに。0と1は同じ点。 |
-| `tonalStrength` | number | 0〜1 | あり | 平均合成長 | **調性のはっきり具合**。1=明確な和音/単音、0=調性なし（ノイズ/打楽器）。低いとき angle は無意味。 |
-| `tonalX` / `tonalY` | number | 各−1〜1 | あり | — | 調性ベクトルの成分。継ぎ目を気にせず使える。`tonalX²+tonalY² = tonalStrength²`、角度=`tonalAngle`。 |
-| `bpm` | number | 0 or ~70-180 | あり | 生値(BPM) | **推定テンポ**（Tier B）。0=未確定。**精度は低い**：2倍/半分の誤りに加え、フルミックスでは実テンポと無関係な値に張り付くこともある（簡易な自己相関のため）。演出の補助程度に。無音が続くと 0。 |
-| `beatPhase` | number | 0〜1 | なし | 位相 | **拍間の位相**（拍で0に戻り次の拍へ増える）。テンポ同期の脈動に。時計から外挿するので、**無音が続くと 0 で停止**（音が無いのに自走するのを防ぐ）。`bpm` が不正確だと当然ずれる。 |
-| `onsetLow` | number | 0〜1 | なし | オートゲイン | **低域オンセット強度**（≒キックの立ち上がり）。 |
-| `onsetMid` | number | 0〜1 | なし | オートゲイン | **中域オンセット強度**（≒スネア）。 |
-| `onsetHigh` | number | 0〜1 | なし | オートゲイン | **高域オンセット強度**（≒ハイハット）。 |
-| `energyDelta` | number | −1〜1 | あり | オートゲイン | **音量の増減**（+大きく/−小さく）。ビルドの判定に。 |
-| `pan` | number | −1〜1 | あり | L/R RMS比 | **左右バランス**（−左/+右）。※ステレオ解析が有効な場合のみ。 |
-| `stereoWidth` | number | 0〜1 | あり | 1−相関 | **ステレオの広がり**（0=モノ/1=広い）。※ステレオ解析が有効な場合のみ。 |
-| `keyConfidence` | number | 0〜1 | — | 相関 | **キー推定の確信度**（Tier B）。数秒で安定。 |
-| `keyIndex` | number | −1 or 0〜11 | — | 生値 | **主音**（0=C…11=B、−1=未確定）。`keyIsMajor` と併用。 |
-| `sampleRate` | number | 例:44100/48000 | — | — | サンプリングレート(Hz)。ビン→周波数変換に（ナイキスト=sampleRate/2）。動画の音質ではなく出力デバイスのレート（[audio-basics.md](audio-basics.md) 15章）。 |
-| `time` | number | 0〜（秒） | — | — | AudioContext 基準の経過秒。アニメの位相計算に。 |
+| `rms` | number | 0–1 | yes | auto-gain | **Overall loudness.** Good for the scale/brightness of the whole image. |
+| `peak` | number | 0–1 | no | bounded (≤1) | **The largest instantaneous swing.** Flashes on a sudden loud hit. |
+| `bass` | number | 0–1 | yes | ÷255 | **Bass** (default 20–150Hz). The bass/kick-drum range. Good for background pulsing. |
+| `mid` | number | 0–1 | yes | ÷255 | **Mids** (default 150–2000Hz). The vocal/main-instrument range. |
+| `treble` | number | 0–1 | yes | ÷255 | **Treble** (default 2k–16kHz). The cymbal/hi-hat range. Good for particles. |
+| `brightness` | number | 0–1 | yes | ÷binCount | **Brightness of the sound** (centroid). Larger with more high-frequency content. Good for hue. |
+| `flux` | number | 0–1 | yes | auto-gain | **Amount of change in the sound** (smoothed version). How intense the motion is. |
+| `impulse` | number | 0–1 | no | auto-gain | **Sharpness of an onset** (the sharp version of flux). A seed for beats. |
+| `rolloff` | number | 0–1 | yes | ratio (≤1) | **How far the sound spreads upward.** The fraction of the height below which 85% of the energy sits. |
+| `flatness` | number | 0–1 | yes | geometric/arithmetic (≤1) | **Leans noisy (1) ⇄ leans tonal/clean (0).** Good for switching texture. |
+| `noisiness` | number | 0–1 | yes | ratio (≤1) | **Grittiness / how "high" the sound feels** (zero-crossing rate). |
+| `loudestHz` | number | 0–~16000 | no | **raw value (Hz)** | **The pitch of the strongest sound.** The one field that is not normalized. |
+| `tonalAngle` | number | 0–1 (cyclic) | yes | circle-of-fifths angle | **Tonal direction.** An angle that folds chroma into a single direction around the circle of fifths. Good for hue, rotation angle, etc. 0 and 1 are the same point. |
+| `tonalStrength` | number | 0–1 | yes | mean resultant length | **How clear the tonality is.** 1 = a clear chord/single note, 0 = no tonality (noise/percussion). When this is low, angle is meaningless. |
+| `tonalX` / `tonalY` | number | each −1 to 1 | yes | — | Components of the tonal vector. Usable without worrying about wraparound. `tonalX²+tonalY² = tonalStrength²`, angle = `tonalAngle`. |
+| `bpm` | number | 0 or ~70–180 | yes | raw value (BPM) | **Estimated tempo** (Tier B). 0 = undetermined. **Accuracy is low**: besides double/half errors, in a full mix it can lock onto a value unrelated to the actual tempo (due to the lightweight autocorrelation approach). Treat it as a rough aid for effects. Goes to 0 during sustained silence. |
+| `beatPhase` | number | 0–1 | no | phase | **Phase within the beat** (resets to 0 on a beat, increases toward the next beat). Good for tempo-synced pulsing. Extrapolated from a clock, so **it stops at 0 during sustained silence** (to prevent it from running on its own with no sound). Naturally drifts if `bpm` is inaccurate. |
+| `onsetLow` | number | 0–1 | no | auto-gain | **Low-band onset strength** (≈ kick attack). |
+| `onsetMid` | number | 0–1 | no | auto-gain | **Mid-band onset strength** (≈ snare). |
+| `onsetHigh` | number | 0–1 | no | auto-gain | **High-band onset strength** (≈ hi-hat). |
+| `energyDelta` | number | −1 to 1 | yes | auto-gain | **Change in volume** (+ louder / − quieter). Good for detecting a build. |
+| `pan` | number | −1 to 1 | yes | L/R RMS ratio | **Left/right balance** (− left / + right). Only meaningful when stereo analysis is enabled. |
+| `stereoWidth` | number | 0–1 | yes | 1 − correlation | **Stereo width** (0 = mono / 1 = wide). Only meaningful when stereo analysis is enabled. |
+| `keyConfidence` | number | 0–1 | — | correlation | **Confidence of the key estimate** (Tier B). Stabilizes after a few seconds. |
+| `keyIndex` | number | −1 or 0–11 | — | raw value | **Tonic** (0=C … 11=B, −1=undetermined). Used together with `keyIsMajor`. |
+| `sampleRate` | number | e.g. 44100/48000 | — | — | The sample rate (Hz). Used for bin→frequency conversion (Nyquist = sampleRate/2). This is the output device's rate, not the video's audio quality (see [audio-basics.md](audio-basics.md), Japanese, chapter 15). |
+| `time` | number | 0– (seconds) | — | — | Elapsed seconds relative to the AudioContext. Good for animation phase calculations. |
 
-## 真偽値
+## Booleans
 
-| フィールド | 型 | 意味 |
+| Field | Type | Meaning |
 |------|------|------|
-| `beat` | boolean | **拍が来た瞬間だけ true**。**適応しきい値**（直近包絡の平均+k×標準偏差）＋不応期で検出。曲の密度に自動追従。 |
-| `kick` | boolean | **低域を叩いた瞬間** だけ true（≒バスドラム）。帯域別オンセットの適応しきい値検出。 |
-| `snare` | boolean | **中域を叩いた瞬間** だけ true（≒スネア）。帯域別オンセットの適応しきい値検出。 |
-| `hat` | boolean | **高域を叩いた瞬間** だけ true（≒ハイハット）。帯域別オンセットの適応しきい値検出。 |
-| `drop` | boolean | **急な大音量の立ち上がり**（ドロップ/衝撃）の瞬間だけ true。 |
-| `silence` | boolean | **ほぼ無音**のとき true（絶対音量がしきい値未満）。 |
-| `keyIsMajor` | boolean | 長調=true / 短調=false（`keyIndex` と併用）。 |
+| `beat` | boolean | **True only at the instant a beat lands.** Detected via an **adaptive threshold** (recent envelope mean + k × standard deviation) plus a refractory period. Automatically adapts to how dense the track is. |
+| `kick` | boolean | **True only at the instant of a low-band hit** (≈ kick drum). Adaptive-threshold detection on the per-band onset. |
+| `snare` | boolean | **True only at the instant of a mid-band hit** (≈ snare). Adaptive-threshold detection on the per-band onset. |
+| `hat` | boolean | **True only at the instant of a high-band hit** (≈ hi-hat). Adaptive-threshold detection on the per-band onset. |
+| `drop` | boolean | **True only at the instant of a sudden loud surge** (a drop/impact). |
+| `silence` | boolean | True when the audio is **nearly silent** (absolute volume is below a threshold). |
+| `keyIsMajor` | boolean | true = major / false = minor (used together with `keyIndex`). |
 
-## 配列（複数の数値）
+## Arrays (multiple numbers)
 
-| フィールド | 型 | 長さ | 範囲 | 平滑化 | 意味 / 描画のヒント |
+| Field | Type | Length | Range | Smoothing | Meaning / rendering hint |
 |------|------|------|------|------|------|
-| `chroma` | number[] | 12 | 各0〜1 | なし | **12音名の含有量**（0=C,1=C#,…11=B、最大=1で正規化）。和音でも動く。**専用の大FFT（fftSize 16384）**のスペクトルから**ピークのみ集計**し、**ホワイトニング（局所平均を引いてノイズ/打楽器に埋もれた山を除去）＋放物線補間で精密化＋隣接音名へ線形加重**（半音境界の取り違えを抑制）。しきい値は `chromaPeakFloor`（既定24）。`key`/`loudestHz` も同じ大FFT由来。 |
-| `bands` | number[] | 既定8 | 各0〜1 | あり | **対数間隔の多バンド**エネルギー（対数で分ける理由は [audio-basics.md](audio-basics.md) 10章）。汎用の多バー描画に。 |
+| `chroma` | number[] | 12 | each 0–1 | no | **How much of each of the 12 pitch classes is present** (0=C, 1=C#, … 11=B; normalized so the max is 1). Moves even for chords. Computed by taking the spectrum from a **dedicated large FFT (fftSize 16384)**, **collecting only peaks**, then **whitening (subtracting a local average to remove peaks buried in noise/percussion) + parabolic interpolation for precision + linear weighting into neighboring pitch classes** (to reduce misattribution at semitone boundaries). The threshold is `chromaPeakFloor` (default 24). `key`/`loudestHz` also come from the same large FFT. |
+| `bands` | number[] | 8 by default | each 0–1 | yes | **Log-spaced multi-band** energy (see [audio-basics.md](audio-basics.md), Japanese, chapter 10, for why it's split logarithmically). Good for general-purpose multi-bar drawing. |
 
-## 生データ配列（"全ビン使う" 描画用）
+## Raw data arrays (for "use all bins" drawing)
 
-| フィールド | 型 | 長さ | 範囲 | 意味 |
+| Field | Type | Length | Range | Meaning |
 |------|------|------|------|------|
-| `spectrum` | Uint8Array | fftSize/2（既定1024） | 各0〜255 | **周波数ビン**（低音→高音）。バーの高さに直接。 |
-| `waveform` | Float32Array | fftSize（既定2048） | 各−1〜1付近 | **波形**（時間領域）。オシロ風ラインに。 |
+| `spectrum` | Uint8Array | fftSize/2 (default 1024) | each 0–255 | **Frequency bins** (low → high). Use directly for bar height. |
+| `waveform` | Float32Array | fftSize (default 2048) | each roughly −1 to 1 | **Waveform** (time domain). Good for an oscilloscope-style line. |
 
-> ⚠️ `spectrum` / `waveform` は毎フレーム同じ配列を**書き換えて**返している（GC負荷回避）。
-> フレームをまたいで保持したい場合はコピー（`spectrum.slice()`）すること。
+> ⚠️ `spectrum` / `waveform` are returned by **mutating the same array** every frame (to avoid GC pressure).
+> If you need to keep a value across frames, copy it (e.g. `spectrum.slice()`).
 
 ---
 
-## エンジンの設定（既定値）
+## Engine configuration (defaults)
 
-[`FeatureEngine`](../src/audio/FeatureEngine.ts) のコンストラクタ第2引数で変更可能。
+Configurable via the second argument to the [`FeatureEngine`](../src/audio/FeatureEngine.ts) constructor.
 
-| オプション | 既定 | 説明 |
+| Option | Default | Description |
 |------|------|------|
-| `fftSize` | 2048 | 反応系（spectrum/bands/flux 等）の FFT長。ビン数は半分（1024）。大きいほど細かいが反応はもっさり。 |
+| `fftSize` | 2048 | FFT length for the reactive metrics (spectrum/bands/flux, etc.). Bin count is half that (1024). Larger is more detailed but reacts more sluggishly. |
 
-> 音階系（`chroma` / `key` / `loudestHz`）は、この反応系とは別に**専用の大FFT（fftSize 16384、binWidth ≈ 3Hz）**を使う（[`AudioGraph`](../src/app/AudioGraph.ts) が2本目のアナライザを用意）。低音でも音名を分離できる一方、時間窓が長い（≈0.34秒）ので反応はゆっくり＝安定寄り。
-| `smoothing` | 0.8 | 平滑化系の EMA 係数。大きいほどなめらか（鈍い）。 |
-| `analyserSmoothing` | 0.5 | AnalyserNode 自身の平滑化。 |
-| `bandCount` | 8 | `bands[]` の分割数。 |
-| `bands` | bass/mid/treble の Hz | 音域別エネルギーの境界。 |
-| `rolloffThreshold` | 0.85 | ロールオフで見るエネルギーの割合。 |
-| `chromaPeakFloor` | 24 | chroma のピーク拾いのしきい値（0〜255）。上げると弱い音を無視して点灯が減る。 |
-| `dropThreshold` | 0.6 | `drop` を立てる energyDelta のしきい値。 |
-| `dropRefractoryMs` | 800 | `drop` 判定の不応期。 |
-| `silenceThreshold` | 0.01 | `silence` 判定の絶対音量しきい値（生RMS, 0〜1）。 |
+> The tonal metrics (`chroma` / `key` / `loudestHz`) use a separate, **dedicated large FFT (fftSize 16384, binWidth ≈ 3Hz)** apart from the reactive metrics ([`AudioGraph`](../src/app/AudioGraph.ts) sets up a second analyzer for this). This can separate pitch names even in low notes, but its longer time window (≈0.34 seconds) means it reacts more slowly — trading speed for stability.
+| `smoothing` | 0.8 | The EMA coefficient for smoothed metrics. Larger = smoother (more sluggish). |
+| `analyserSmoothing` | 0.5 | The AnalyserNode's own built-in smoothing. |
+| `bandCount` | 8 | The number of divisions in `bands[]`. |
+| `bands` | Hz for bass/mid/treble | The boundaries of the per-range energy bands. |
+| `rolloffThreshold` | 0.85 | The fraction of energy that rolloff looks for. |
+| `chromaPeakFloor` | 24 | The threshold (0–255) for chroma's peak picking. Raising it ignores weak sounds and reduces how many pitch classes light up. |
+| `dropThreshold` | 0.6 | The energyDelta threshold that triggers `drop`. |
+| `dropRefractoryMs` | 800 | The refractory period for `drop` detection. |
+| `silenceThreshold` | 0.01 | The absolute-volume threshold for `silence` detection (raw RMS, 0–1). |
 
-> ステレオ解析（`pan` / `stereoWidth`）は、`FeatureEngine` の第3引数に L/R アナライザを渡したときのみ有効（[`AudioGraph`](../src/app/AudioGraph.ts) が渡している）。渡さない場合は 0。
+> Stereo analysis (`pan` / `stereoWidth`) is only active when L/R analyzers are passed as the third argument to `FeatureEngine` (which [`AudioGraph`](../src/app/AudioGraph.ts) does). Otherwise both are 0.
 
-> `beat` / `kick` / `snare` / `hat` は**適応しきい値検出**（[`AdaptiveOnset`](../src/audio/AdaptiveOnset.ts)）。感度 `k`・下限 `floor`・窓幅 `win`・不応期は `FeatureEngine` 内の生成時に指定（現状はコード側で調整）。
+> `beat` / `kick` / `snare` / `hat` use **adaptive-threshold detection** ([`AdaptiveOnset`](../src/audio/AdaptiveOnset.ts)). The sensitivity `k`, floor `floor`, window width `win`, and refractory period are specified where `FeatureEngine` constructs it (currently tuned in code).
 
 ---
 
-## Analyzer（分析/デバッグ表示モード）
+## Analyzer (analysis/debug display mode)
 
-実装された数値を**画面に並べて**確認するための [`AnalyzerVisualizer`](../src/visualizers/AnalyzerVisualizer.ts)（UI名 "Analyzer (All Features)"、id=`analyzer`）を同梱しています。これも普通のプラグインの1つで、プラグイン作者が使える全特徴量の参照元も兼ねます。
+We bundle [`AnalyzerVisualizer`](../src/visualizers/AnalyzerVisualizer.ts) (UI name "Analyzer (All Features)", id=`analyzer`), which **lays out the implemented values on screen** so you can check them. It's just a regular plugin like any other, and also doubles as a reference for every feature a plugin author can use.
 
-表示は **動画の表示範囲にぴったり重なり**、フルスクリーン・シアターモード・サイズ変更に追従します（YouTube のコントロールより奥のレイヤーに入ります）。
+The display **overlays exactly the video's display area** and follows fullscreen, theater mode, and resizing (it sits on a layer above YouTube's own controls).
 
-横長の動画域を活かした **4カラム構成**（左→右）：
+A **4-column layout** (left → right) that makes use of a wide video area:
 
-1. **spectrum** … 周波数を**縦軸（リニア＝等間隔）**（低域=下／高域=上）にした横バー。生 FFT ビンに忠実。縦幅いっぱい。
-2. **bands** … 周波数を**縦軸（対数）**にした横バー（音楽的に低い方を細かく刻んだまとめ）。
-3. **スカラーバー** … `rms` 〜 `pan` を ラベル＋横バー＋数値で一覧（tonal 各値・onset・energyDelta・stereoWidth・keyConfidence も。±値は 0 中央のバー）。
-4. **chroma** → **key** → **bpm/loudestHz/sampleRate/time** → **調性ベクトルのダイヤル**（円＋ドット）→ **ランプ**（beat/kick/snare/hat/drop/silence）→ **waveform**。
+1. **spectrum** … frequency on a **vertical, linear (evenly-spaced) axis** (low = bottom / high = top), as horizontal bars. Faithful to the raw FFT bins. Uses the full height.
+2. **bands** … frequency on a **vertical, logarithmic axis**, as horizontal bars (a musically meaningful grouping that's finer at the low end).
+3. **Scalar bars** … `rms` through `pan`, listed as label + horizontal bar + value (including each tonal value, onset, energyDelta, stereoWidth, keyConfidence; ± values use a bar centered at 0).
+4. **chroma** → **key** → **bpm/loudestHz/sampleRate/time** → **the tonal-vector dial** (circle + dot) → **lamps** (beat/kick/snare/hat/drop/silence) → **waveform**.
 
-> ⚠️ `spectrum`（リニア軸）と `bands`（対数軸）は**縦軸の刻み方が意図的に違う**。
-> `bands` は `spectrum` を音楽的にまとめたものだが、軸が違うので山の位置は一致しない（別物として見る）。
-> **なぜ bands は対数で刻むのか** → [audio-basics.md](audio-basics.md) 10章。
+> ⚠️ `spectrum` (linear axis) and `bands` (log axis) **deliberately use different vertical scales**.
+> `bands` is a musical summary of `spectrum`, but because the axes differ, the peaks won't line up between them (treat them as separate things).
+> **Why bands is spaced logarithmically** → see [audio-basics.md](audio-basics.md) (Japanese), chapter 10.
 
-### 使い方（オンスクリーン・推奨）
+### How to use (on-screen, recommended)
 
-実際のホスト（[`content.ts`](../src/hosts/extension/content.ts)）と同じ3層の配線。
-`AudioGraph`（音の入力）と `Stage`（描画先）を作って `VisualizerApp` に注入する。
+The same three-layer wiring as the real host ([`content.ts`](../src/hosts/extension/content.ts)).
+Build an `AudioGraph` (audio input) and a `Stage` (render target), and inject them into `VisualizerApp`.
 
 ```ts
 import { registry } from '../app/registry';
-import '../app/plugins.generated';                // 副作用 import で内蔵プラグインを登録
+import '../app/plugins.generated';                // side-effect import registers built-in plugins
 import { AudioGraph } from '../app/AudioGraph';
 import { VideoStage } from '../app/Stage';
 import { VisualizerApp } from '../app/VisualizerApp';
 
 const video = document.querySelector<HTMLVideoElement>('video.video-stream')!;
 const graph = new AudioGraph({ kind: 'element', element: video });
-graph.resume();                                   // AudioContext を再開
+graph.resume();                                   // resume the AudioContext
 
 const app = new VisualizerApp(graph, new VideoStage(video), registry);
 app.setVisualizer('analyzer');
 app.start();
-// 切替（音声グラフは作り直さない）: app.setVisualizer('bars');
-// 停止: app.stop();   破棄: app.dispose();
+// switch (doesn't rebuild the audio graph): app.setVisualizer('bars');
+// stop: app.stop();   dispose: app.dispose();
 ```
 
-数値は毎フレーム変わりますが、**横バー・縦バー・グラフ**で動きが直感的に分かります。
-本物のビジュアライザを作る前に「どの指標がどんな音でどう動くか」を体感するのに使ってください。
+The values change every frame, but the **horizontal bars, vertical bars, and graphs** make the motion intuitive to follow.
+Use this to get a feel for "which metric moves how, with which sound" before building a real visualizer.
 
-### Console で見たい場合（補助）
+### Viewing in the console (optional)
 
-毎フレーム `console.log` すると流れて読めないので、**間引いて `console.table`** がおすすめです。
+Calling `console.log` every frame scrolls by too fast to read, so **throttling it and using `console.table`** is recommended.
 
 ```ts
 let lastLog = 0;
 function loop() {
   const f = engine.update();
   visualizer.draw(f, view);
-  if (f.time - lastLog > 0.25) {        // 0.25秒ごと（毎フレームは多すぎる）
+  if (f.time - lastLog > 0.25) {        // every 0.25s (every frame is too much)
     lastLog = f.time;
     console.table({
       rms: +f.rms.toFixed(2), bass: +f.bass.toFixed(2), mid: +f.mid.toFixed(2),
@@ -164,5 +166,5 @@ function loop() {
 }
 ```
 
-> 配列（spectrum/chroma/waveform）は Console だと見づらいので、オンスクリーンの `AnalyzerVisualizer` 推奨。
-> Console は「特定スカラーが想定どおり動くか」のピンポイント確認向き。
+> Arrays (spectrum/chroma/waveform) are hard to read in the console, so the on-screen `AnalyzerVisualizer` is recommended instead.
+> The console is better suited to a pinpoint check of "does this particular scalar behave as expected."

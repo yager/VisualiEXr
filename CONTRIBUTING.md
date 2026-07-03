@@ -1,65 +1,68 @@
-# コントリビューションガイド
+**English** | [日本語](CONTRIBUTING.ja.md)
 
-VisualiEXr への貢献を歓迎します。特に **ビジュアライザ（プラグイン）の追加**は、
-コアに触れずに作品を増やせるので最初の一歩に最適です。
+# Contributing guide
 
-- 設計の全体像 → [README.md](README.md)
-- プラグインの作り方（詳細） → [docs/architecture.md](docs/architecture.md#新しいプラグインの作り方)
-- 使える音の材料（AudioFeatures） → [docs/features.md](docs/features.md)
+Contributions to VisualiEXr are welcome. Adding a **visualizer (plugin)** in particular
+is a great first step, since you can add new work without touching the core.
+
+- Design overview → [README.md](README.md)
+- How to write a plugin (in detail) → [docs/architecture.md](docs/architecture.md#how-to-add-a-new-plugin)
+- The audio material you can use (AudioFeatures) → [docs/features.md](docs/features.md)
 
 ---
 
-## 開発の準備
+## Development setup
 
 ```bash
-npm install        # 依存の取得（electron / three / pixi 含む）
-npm run typecheck  # 型チェック（gen-plugins.mjs → tsc）
-npm run build      # 拡張(dist-extension/) と Electron(dist-app/) を出力
-npm start          # ビルド → Electron 起動（出力＋操作ウィンドウ）
+npm install        # fetch dependencies (includes electron / three / pixi)
+npm run typecheck  # type check (gen-plugins.mjs → tsc)
+npm run build      # outputs the extension (dist-extension/) and Electron (dist-app/)
+npm start          # build → launch Electron (output + control windows)
 ```
 
-拡張の動作確認は `chrome://extensions` →「デベロッパーモード」ON →
-「パッケージ化されていない拡張機能を読み込む」→ `dist-extension/` を選択。
+To check the extension: `chrome://extensions` → turn on "Developer mode" →
+"Load unpacked" → select `dist-extension/`.
 
 ---
 
-## ビジュアライザ（プラグイン）を追加する
+## Adding a visualizer (plugin)
 
-**`src/visualizers/` に `〜Visualizer.ts` を1つ足すだけ**で、登録も⚙メニューへの追加も自動です
-（[`gen-plugins.mjs`](gen-plugins.mjs) が `plugins.generated.ts` を生成）。
+**Just add a single `~Visualizer.ts` file to `src/visualizers/`** — registration and addition to the ⚙ menu happen automatically
+([`gen-plugins.mjs`](gen-plugins.mjs) generates `plugins.generated.ts`).
 
-### 決まりは2つだけ
-1. ファイル名を `〜Visualizer.ts` にする
-2. `export default class` にする
+### Only two rules
+1. Name the file `~Visualizer.ts`
+2. Use `export default class`
 
-### 2種類のプラグイン
-- **2D（`Visualizer`）**：`draw(features, { ctx, width, height })` を書くだけ。ホストが Canvas2D を用意。手軽。
-- **自前描画面（`SurfaceVisualizer`）**：`mount(container) / frame(features) / unmount()`。
-  自分で canvas / レンダラを作る。WebGL・three.js・PixiJS でのリッチ描画向け。
+### Two plugin types
+- **2D (`Visualizer`)**: just write `draw(features, { ctx, width, height })`. The host provides a Canvas2D. Easy to write.
+- **Custom surface (`SurfaceVisualizer`)**: `mount(container) / frame(features) / unmount()`.
+  You build your own canvas/renderer. For rich rendering with WebGL, three.js, or PixiJS.
 
-契約は [`src/visualizers/Visualizer.ts`](src/visualizers/Visualizer.ts)、
-お手本は [`BarsVisualizer.ts`](src/visualizers/BarsVisualizer.ts)（2D）と
-[`ThreeTerrainVisualizer.ts`](src/visualizers/ThreeTerrainVisualizer.ts)（Surface）を参照。
+See the contract at [`src/visualizers/Visualizer.ts`](src/visualizers/Visualizer.ts),
+and reference examples at
+[`BarsVisualizer.ts`](src/visualizers/BarsVisualizer.ts) (2D) and
+[`ThreeTerrainVisualizer.ts`](src/visualizers/ThreeTerrainVisualizer.ts) (Surface).
 
-### 守ってほしいこと
-- **音響解析は知らなくてよい**。`features`（0〜1 に正規化された値）を掛けるだけで音に反応します
-  （例外は `loudestHz`＝生の Hz）。範囲・意味は [docs/features.md](docs/features.md) に全部あります。
-- `id` はプロジェクト内で一意に（`storage` の保存キーになります）。`name` は⚙メニューの表示名。
-- `author` に自分のクレジットを入れてかまいません（ツールチップに出ます）。
-- `constructor` は軽く保つ（登録時に1個だけ試作するため）。重い準備は `init()`（2D）/ `mount()`（Surface）へ。
-- 拡張オーバーレイの**透過を壊さない**：three 系は EffectComposer のブルームを避け、
-  加算合成＋フォグで発光を表現してください（既存の three サンプルに倣う）。
-- `npm run watch` 中に**新規ファイルを足したとき**は watch を再起動（登録の再生成のため）。既存編集は自動反映。
+### Things to keep in mind
+- **You don't need to know anything about audio analysis.** Multiplying by `features` (values normalized to 0–1) is enough to make it react to sound
+  (the exception is `loudestHz`, a raw Hz value). The full range and meaning of each field is in [docs/features.md](docs/features.md).
+- `id` must be unique within the project (it becomes the `storage` key). `name` is the display name in the ⚙ menu.
+- Feel free to add your own credit in `author` (it appears in the tooltip).
+- Keep `constructor` light (one instance is built as a trial at registration time). Do heavy setup in `init()` (2D) / `mount()` (Surface) instead.
+- **Don't break the transparency** of the extension overlay: for three.js-based plugins, avoid EffectComposer bloom, and
+  express glow using additive blending + fog instead (follow the existing three.js samples).
+- If you add a **new file** while `npm run watch` is running, restart watch (to regenerate the registration). Editing existing files reloads automatically.
 
 ---
 
-## プルリクエストの前に
+## Before opening a pull request
 
-- `npm run typecheck` が通ること。
-- 新しいプラグインは拡張・スタンドアロンのどちらかで実際に描画されることを確認。
-- 変更の意図を PR 説明に一言添えてください（挙動の変化があれば特に）。
+- `npm run typecheck` must pass.
+- Confirm that new plugins actually render, in either the extension or the standalone build.
+- Please add a short note about the intent of the change to the PR description (especially if there's a behavior change).
 
-## ライセンス
+## License
 
-コントリビュートされたコードは、本プロジェクトと同じ **MIT License**（[LICENSE](LICENSE)）で
-公開されることに同意したものとみなします。
+By contributing code, you agree that it will be released under the same **MIT License** ([LICENSE](LICENSE))
+as this project.
