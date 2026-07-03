@@ -13,6 +13,7 @@ mkdirSync('dist-web', { recursive: true });
 
 // ── 拡張ホスト（Chrome/YouTube）→ dist-extension/ ──
 cpSync('public/manifest.json', 'dist-extension/manifest.json');
+cpSync('public/icons', 'dist-extension/icons', { recursive: true });
 const extension = {
   entryPoints: ['src/hosts/extension/content.ts'],
   bundle: true,
@@ -41,6 +42,9 @@ const standalone = {
 // github.io はサブパス配信（username.github.io/リポジトリ名/）になるため、
 // 生成HTML内の資産参照は相対パス（先頭 / なし）にしてある。esbuild の outfile 名もそれに合わせる。
 cpSync('src/hosts/web/index.html', 'dist-web/index.html');
+cpSync('src/hosts/web/favicon.png', 'dist-web/favicon.png');
+cpSync('src/hosts/web/apple-touch-icon.png', 'dist-web/apple-touch-icon.png');
+cpSync('src/hosts/web/og-image.png', 'dist-web/og-image.png');
 // legal（プライバシー/利用規約/特商法/サポート）は変換不要の静的HTML。そのまま dist-web/legal/ へ。
 cpSync('src/hosts/web/legal', 'dist-web/legal', { recursive: true });
 const web = {

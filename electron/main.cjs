@@ -72,19 +72,24 @@ app.whenReady().then(async () => {
   const port = await startServer();
   const base = `http://localhost:${port}`;
 
+  const icon = path.join(__dirname, 'icon.png');
+
   // 出力ウィンドウ（通常ウィンドウで起動。手動で全画面にできる）
   const output = new BrowserWindow({
     width: 960, height: 540, backgroundColor: '#000000',
-    title: 'Visualizer Output',
+    title: 'Visualizer Output', icon,
   });
   output.loadURL(`${base}/output.html`);
 
   // 操作ウィンドウ（手元だけ・観客に見せない）
   const control = new BrowserWindow({
     width: 340, height: 560, x: 40, y: 40,
-    title: 'Visualizer Control',
+    title: 'Visualizer Control', icon,
   });
   control.loadURL(`${base}/control.html`);
+
+  // macOS の Dock アイコン（開発時=npm start でも反映される）
+  if (process.platform === 'darwin' && app.dock) app.dock.setIcon(icon);
 });
 
 app.on('window-all-closed', () => app.quit());

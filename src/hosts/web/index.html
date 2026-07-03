@@ -5,6 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>VisualiEXr — 音に反応するビジュアライザ / Audio-reactive Visualizer</title>
 <meta name="description" content="マイクやタブの音に反応するビジュアライザをブラウザだけで試せるライブデモ。インストール不要。">
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta property="og:title" content="VisualiEXr — 音に反応するビジュアライザ">
+<meta property="og:description" content="マイクやタブの音に反応するビジュアライザをブラウザだけで試せるライブデモ。インストール不要。">
+<meta property="og:image" content="og-image.png">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary">
 <style>
   :root {
     color-scheme: dark;
@@ -29,6 +36,9 @@
   .hero {
     padding: 72px 0 40px;
     text-align: center;
+  }
+  .hero .logo {
+    width: 72px; height: 72px; border-radius: 18px; margin: 0 auto 16px; display: block;
   }
   .hero h1 {
     font-size: clamp(2rem, 5vw, 3rem);
@@ -119,6 +129,7 @@
 
 <div id="landing">
   <section class="hero">
+    <img class="logo" src="apple-touch-icon.png" alt="VisualiEXr logo" width="72" height="72">
     <h1>VisualiEXr</h1>
     <p class="lead">音にあわせて動くグラフィックをブラウザだけで。インストール不要、URLを開けばすぐ試せます。</p>
     <p class="lead en">Audio-reactive visuals, right in your browser. No install — just open the URL and try it.</p>

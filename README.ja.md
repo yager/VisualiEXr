@@ -1,5 +1,7 @@
 [English](README.md) | **日本語**
 
+<p align="center"><img src="img/visualiexr_logo.png" alt="VisualiEXr logo" width="120"></p>
+
 # VisualiEXr
 
 **[▶ ライブデモを試す](https://yager.github.io/VisualiEXr/)** — インストール不要。ブラウザだけでマイク/タブ音声に反応します。

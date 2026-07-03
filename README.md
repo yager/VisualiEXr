@@ -1,5 +1,7 @@
 **English** | [日本語](README.ja.md)
 
+<p align="center"><img src="img/visualiexr_logo.png" alt="VisualiEXr logo" width="120"></p>
+
 # VisualiEXr
 
 **[▶ Try the live demo](https://yager.github.io/VisualiEXr/)** — no install required, reacts to your microphone/tab audio right in the browser.

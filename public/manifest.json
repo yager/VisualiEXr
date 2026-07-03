@@ -4,6 +4,20 @@
   "short_name": "VisualiEXr",
   "version": "0.1.0",
   "description": "音に反応するビジュアルを YouTube / YouTube Music に重ねる、プラグイン式の音楽ビジュアライザ",
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
   "content_scripts": [
     {
       "matches": ["*://*.youtube.com/*"],
