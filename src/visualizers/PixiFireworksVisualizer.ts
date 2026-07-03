@@ -30,7 +30,6 @@ export default class PixiFireworksVisualizer implements SurfaceVisualizer {
   private container: HTMLElement | null = null;
   private app: PIXI.Application | null = null;
   private ready = false;
-  private pc: PIXI.ParticleContainer | null = null;
   private particles: PIXI.Particle[] = [];
 
   // パーティクル状態（プールと並行の配列）
@@ -80,7 +79,6 @@ export default class PixiFireworksVisualizer implements SurfaceVisualizer {
         });
         pc.blendMode = 'add'; // 加算＝重なるほど明るい花火
         app.stage.addChild(pc);
-        this.pc = pc;
 
         for (let i = 0; i < MAX; i++) {
           const p = new PIXI.Particle({ texture, anchorX: 0.5, anchorY: 0.5, alpha: 0 });
@@ -213,7 +211,6 @@ export default class PixiFireworksVisualizer implements SurfaceVisualizer {
   unmount(): void {
     if (this.app) this.app.destroy(true, { children: true });
     this.app = null;
-    this.pc = null;
     this.particles = [];
     this.ready = false;
     this.container = null;
