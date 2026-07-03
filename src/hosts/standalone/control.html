@@ -1,0 +1,52 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Visualizer Control</title>
+  <style>
+    :root { color-scheme: dark; }
+    body {
+      margin: 0; padding: 14px; background: #1b1b1b; color: #eee;
+      font: 13px/1.5 system-ui, sans-serif;
+    }
+    h1 { font-size: 13px; color: #9cf; margin: 0 0 10px; letter-spacing: .04em; }
+    .label { color: #9cf; font-size: 11px; margin: 12px 0 4px; }
+    select {
+      width: 100%; padding: 6px 8px; background: #2a2a2a; color: #eee;
+      border: 1px solid #444; border-radius: 6px;
+    }
+    #plugins { display: flex; flex-direction: column; gap: 4px; margin-top: 2px; }
+    .item {
+      text-align: left; padding: 8px 10px; background: #2a2a2a; color: #eee;
+      border: 1px solid #3a3a3a; border-radius: 6px; cursor: pointer;
+    }
+    .item:hover { background: #333; }
+    .item.active { background: #2e7d32; border-color: #2e7d32; color: #fff; }
+    .tools { display: flex; gap: 6px; margin-top: 2px; }
+    .btn {
+      flex: 1; padding: 6px 8px; background: #333; color: #eee;
+      border: 1px solid #444; border-radius: 6px; cursor: pointer;
+    }
+    .btn:hover { background: #3c3c3c; }
+    .path { margin-top: 6px; font-size: 10px; color: #888; word-break: break-all; }
+  </style>
+</head>
+<body>
+  <h1>MUSIC VISUALIZER — CONTROL</h1>
+
+  <div class="label">音声入力</div>
+  <select id="device"></select>
+
+  <div class="label">ビジュアライザ</div>
+  <div id="plugins"></div>
+
+  <div class="label">プラグイン（追加）</div>
+  <div class="tools">
+    <button id="reload" class="btn">再読み込み</button>
+    <button id="openFolder" class="btn">フォルダを開く</button>
+  </div>
+  <div id="pluginDir" class="path"></div>
+
+  <script src="control.js"></script>
+</body>
+</html>

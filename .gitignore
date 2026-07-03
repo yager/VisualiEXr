@@ -1,0 +1,11 @@
+node_modules/
+dist-extension/
+dist-app/
+src/app/plugins.generated.ts
+
+# OS / editor
+.DS_Store
+*.log
+
+# local tooling
+.claude/

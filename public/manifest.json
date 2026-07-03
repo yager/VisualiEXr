@@ -1,0 +1,17 @@
+{
+  "manifest_version": 3,
+  "name": "VisualiEXr",
+  "short_name": "VisualiEXr",
+  "version": "0.1.0",
+  "description": "音に反応するビジュアルを YouTube / YouTube Music に重ねる、プラグイン式の音楽ビジュアライザ",
+  "content_scripts": [
+    {
+      "matches": ["*://*.youtube.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_end",
+      "all_frames": false
+    }
+  ],
+  "permissions": ["storage"],
+  "host_permissions": ["*://*.youtube.com/*"]
+}

@@ -1,0 +1,26 @@
+{
+  "name": "visualiexr",
+  "version": "0.1.0",
+  "description": "プラグイン式の音楽ビジュアライザ（特徴量エンジン + プラグイン機構）",
+  "type": "module",
+  "main": "electron/main.cjs",
+  "scripts": {
+    "gen": "node gen-plugins.mjs",
+    "typecheck": "node gen-plugins.mjs && tsc -p tsconfig.json",
+    "build": "node build.mjs",
+    "watch": "node build.mjs --watch",
+    "start": "node build.mjs && electron electron/main.cjs"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.2.0",
+    "@types/three": "^0.185.0",
+    "electron": "^32.3.3",
+    "esbuild": "^0.24.2",
+    "typescript": "^5.6.3"
+  },
+  "dependencies": {
+    "pixi-filters": "^6.0.0",
+    "pixi.js": "^8.6.0",
+    "three": "^0.185.0"
+  }
+}
