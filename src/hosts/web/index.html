@@ -83,6 +83,20 @@
     justify-content: center;
   }
 
+  .support { text-align: center; }
+  a.donate {
+    display: inline-block; margin-top: 14px; padding: 12px 24px; border-radius: 999px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    color: #0a0a0f; font-weight: 700; text-decoration: none;
+  }
+  a.donate:hover { filter: brightness(1.08); }
+  nav.legal-links {
+    display: flex; flex-wrap: wrap; gap: 8px 16px; justify-content: center;
+    margin: 14px 0 40px; font-size: 0.8rem;
+  }
+  nav.legal-links a { color: var(--muted); text-decoration: none; }
+  nav.legal-links a:hover { color: var(--fg); }
+
   /* --- デモ実行中のオーバーレイ --- */
   #overlay[hidden] { display: none; }
   #overlay {
@@ -134,12 +148,25 @@
     </div>
   </section>
 
+  <section class="block support">
+    <h2>開発を支援<span class="en">Support</span></h2>
+    <p>VisualiEXr は無料・オープンソース（MIT）です。開発の継続を応援いただける場合は、任意の寄付を歓迎します（対価はありません）。<br>
+      <span style="opacity:.8">VisualiEXr is free and open source. If you'd like to support continued development, donations are welcome — no goods or services in return.</span></p>
+    <a href="https://donate.stripe.com/7sY3cw6r7aaI7rIczv18c00" target="_blank" rel="noopener" class="donate">♥ 寄付する / Donate</a>
+  </section>
+
   <footer class="links">
     <a href="https://chrome.google.com/webstore" target="_blank" rel="noopener">Chrome ウェブストア（準備中）/ Chrome Web Store (TBD)</a>
     <a href="https://github.com/yager/VisualiEXr/releases" target="_blank" rel="noopener">Electron版 / Desktop Releases</a>
     <a href="https://github.com/yager/VisualiEXr" target="_blank" rel="noopener">GitHub リポジトリ</a>
     <a href="https://github.com/yager/VisualiEXr/tree/main/docs" target="_blank" rel="noopener">ドキュメント / Docs</a>
   </footer>
+  <nav class="legal-links">
+    <a href="legal/support/">サポート / Support</a>
+    <a href="legal/privacy/">プライバシーポリシー / Privacy</a>
+    <a href="legal/terms/">利用規約 / Terms</a>
+    <a href="legal/commerce/">特定商取引法に基づく表記</a>
+  </nav>
 </div>
 
 <div id="overlay" hidden>

@@ -1,0 +1,4 @@
+# リポジトリの「Sponsor」ボタンに表示される寄付リンク。
+# github: は GitHub Sponsors を有効化すると機能する（未申請なら一旦この行を削除してもよい）。
+github: [yager]
+custom: ["https://donate.stripe.com/7sY3cw6r7aaI7rIczv18c00"]
