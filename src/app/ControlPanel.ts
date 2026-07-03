@@ -42,6 +42,8 @@ function ensureStyle(): void {
     .vexr-item { display:block; width:100%; text-align:left; padding:8px 14px; background:transparent; color:#eee; border:none; cursor:pointer; }
     .vexr-item:hover { background:rgba(255,255,255,0.12); }
     .vexr-item.active { background:#2e7d32; color:#fff; }
+    .vexr-support { color:#ff9ec7; text-decoration:none; border-top:1px solid rgba(255,255,255,0.14); margin-top:6px; }
+    .vexr-support:hover { background:rgba(255,255,255,0.12); }
   `;
   document.head.appendChild(s);
 }
@@ -142,6 +144,18 @@ export class ControlPanel {
       });
       this.panel.appendChild(item);
     }
+
+    // 開発支援（任意の寄付）。外部サイトを新しいタブで開くだけ（決済は埋め込まない）。
+    const support = document.createElement('a');
+    support.className = 'vexr-item vexr-support';
+    support.textContent = '♥ Support / 寄付';
+    support.href = 'https://donate.stripe.com/7sY3cw6r7aaI7rIczv18c00';
+    support.target = '_blank';
+    support.rel = 'noopener noreferrer';
+    support.title = '開発を支援する（任意の寄付・新しいタブで開きます）';
+    support.addEventListener('click', (e) => { e.stopPropagation(); this.setOpen(false); });
+    this.panel.appendChild(support);
+
     this.highlight();
   }
 
