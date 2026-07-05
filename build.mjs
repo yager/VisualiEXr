@@ -44,6 +44,7 @@ const standalone = {
 cpSync('src/hosts/web/index.html', 'dist-web/index.html');
 cpSync('src/hosts/web/favicon.png', 'dist-web/favicon.png');
 cpSync('src/hosts/web/apple-touch-icon.png', 'dist-web/apple-touch-icon.png');
+// OG画像：og-poster の出力（img/visualiexr-og-1920x1080.png）を src/hosts/web/og-image.png に反映してからビルドする
 cpSync('src/hosts/web/og-image.png', 'dist-web/og-image.png');
 // legal（プライバシー/利用規約/特商法/サポート）は変換不要の静的HTML。そのまま dist-web/legal/ へ。
 cpSync('src/hosts/web/legal', 'dist-web/legal', { recursive: true });
