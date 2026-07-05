@@ -1,6 +1,6 @@
 **English** | [日本語](README.ja.md)
 
-<p align="center"><img src="img/visualiexr_logo.png" alt="VisualiEXr logo" width="120"></p>
+<p align="center"><img src="img/visualiexr-og-1920x1080.png" alt="VisualiEXr main visual" width="640"></p>
 
 # VisualiEXr
 

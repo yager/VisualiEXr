@@ -1,0 +1,365 @@
+/**
+ * CyberFlightVisualizer（og-poster用コピー）— 元は src/visualizers/CyberFlightVisualizer.ts。
+ *
+ * 拡張機能本体とは別ファイル。OG静止画向けに Fog 廃止・ビル非表示・カメラ固定・
+ * 床/天井素材の調整などを含む。`preserveDrawingBuffer: true` は drawImage キャプチャ用。
+ */
+import * as THREE from 'three';
+import { AudioFeatures } from '../../../src/audio/AudioFeatures';
+import { SurfaceVisualizer } from '../../../src/visualizers/Visualizer';
+
+const FAR = -720;            // 生成の最奥（z）
+const NEAR = 30;             // これより手前に来たら奥へ戻す（カメラは z≈0）
+const GROUND_Y = -16;        // 床の高さ
+const CEIL_Y = 24;           // 天井の高さ（床グリッドのミラー）。カメラ y は (GROUND_Y + CEIL_Y) / 2
+const ROAD_HALF = 16;        // 道の半幅（この外側にビルが建つ）
+const GRID_HALF = 80;        // 床/天井グリッドの半幅
+const GROUND_ROWS = 46;      // 手前へ流れる横線の数
+const GROUND_SPACING = Math.abs(FAR) / GROUND_ROWS;
+// OGポスターでは床/天井のみ使用（ビルは無効化済み。BUILDING_COUNTは不要のため削除）。
+const HUD_POOL = 6;          // 円形HUDの同時最大数
+
+interface Hud {
+  group: THREE.Group;
+  mats: THREE.LineBasicMaterial[];
+  arcs: THREE.Object3D[];
+  active: boolean;
+  spin: number;
+}
+
+export default class CyberFlightVisualizer implements SurfaceVisualizer {
+  readonly id = 'cyber-flight';
+  readonly name = 'Cyber Flight (Three.js)';
+  readonly author = 'VisualiEXr';
+  readonly description = 'three.js：サイバーシティを進む。円形HUDが飛来';
+  readonly order = 71;
+
+  private container: HTMLElement | null = null;
+  private renderer: THREE.WebGLRenderer | null = null;
+  private scene: THREE.Scene | null = null;
+  private camera: THREE.PerspectiveCamera | null = null;
+
+  private buildings: THREE.Group[] = [];
+  private boxGeo: THREE.BoxGeometry | null = null;
+  private boxEdges: THREE.EdgesGeometry | null = null;
+  private edgeMat: THREE.LineBasicMaterial | null = null;
+  private fillMat: THREE.MeshLambertMaterial | null = null;
+  private groundLines: THREE.LineSegments[] = [];
+  private groundMat: THREE.LineBasicMaterial | null = null;
+  private groundFill: THREE.MeshBasicMaterial | null = null;
+  private huds: Hud[] = [];
+
+  private w = 0;
+  private h = 0;
+  private t = 0;
+  private hudCooldown = 0;
+  private shake = 0;
+
+  mount(container: HTMLElement): void {
+    this.container = container;
+    const w = Math.max(1, container.clientWidth);
+    const h = Math.max(1, container.clientHeight);
+    this.w = w;
+    this.h = h;
+
+    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, preserveDrawingBuffer: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setSize(w, h, false);
+    renderer.setClearColor(0x000000, 0); // 背景は透明（動画を透かす）
+    renderer.domElement.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block;';
+    container.appendChild(renderer.domElement);
+    this.renderer = renderer;
+
+    const scene = new THREE.Scene();
+    // OGポスター用調整：Fogを廃止（静止画では奥行き演出への寄与が薄い一方、
+    // 床/天井の面が遠方でほぼ黒にフェードして色/不透明度の変更が見えにくくなる原因だったため）。
+    this.scene = scene;
+
+    // ライト：面（Lambert）に陰影を付けて「塊」に見せる（線/点の Basic 素材には影響しない）。
+    scene.add(new THREE.AmbientLight(0x223344, 1.2));
+    const dir = new THREE.DirectionalLight(0x88bbff, 1.4);
+    dir.position.set(0.5, 1.0, 0.25);
+    scene.add(dir);
+
+    const camera = new THREE.PerspectiveCamera(72, w / h, 0.1, 900);
+    camera.position.set(0, 2, 0);
+    this.camera = camera;
+
+    // ── 床グリッド ───────────────────────────────────────────────
+    // OGポスター用調整：床/天井の線（グリッド）は背景レイヤーに埋もれないよう不透明度1.0にする
+    // （オリジナルは opacity: 0.6）。
+    this.groundMat = new THREE.LineBasicMaterial({
+      color: 0x2266aa, transparent: true, opacity: 1.0,
+      blending: THREE.AdditiveBlending, depthWrite: false, fog: true,
+    });
+    // 半透明の床面＆天井面（立体感＝上下があるという手掛かり）。天井は床のミラー。
+    // OGポスター用調整：不透明度 0.7（オリジナルは0.6。線=groundMatは別途1.0）。
+    // さらに MeshLambertMaterial → MeshBasicMaterial に変更（光源の影響を受けない素材）。
+    // 元は単一のDirectionalLightが上方から差しており、上向きの床はよく光が当たる一方、
+    // 下向きの天井の裏側にはほとんど光が当たらず暗く沈む＝濃さの違いが出ていた。
+    // 光の位置をどう調整しても「上からの光」である限りこの非対称は解消しないため、
+    // 床/天井の面だけ光源の影響を受けない素材にして、確実に同じ濃さにする。
+    // MeshBasicMaterialは光源で減光されない分、元の色(0x08243a)のままだと明るく出すぎて
+    // 手前のレイヤーが目立たなくなるため、色を暗くし不透明度も0.7に落とす。
+    this.groundFill = new THREE.MeshBasicMaterial({
+      color: 0x04121d, transparent: true, opacity: 0.7,
+      blending: THREE.NormalBlending, depthWrite: false, fog: true, side: THREE.DoubleSide,
+    });
+    const planeGeo = new THREE.PlaneGeometry(GRID_HALF * 2, Math.abs(FAR));
+    const floor = new THREE.Mesh(planeGeo, this.groundFill);
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.set(0, GROUND_Y - 0.2, (NEAR + FAR) / 2);
+    scene.add(floor);
+    const ceil = new THREE.Mesh(planeGeo, this.groundFill);
+    ceil.rotation.x = Math.PI / 2;
+    ceil.position.set(0, CEIL_Y, (NEAR + FAR) / 2);
+    scene.add(ceil);
+    // 縦レール（z方向・静止）：道の連続感。床と天井の両方に。
+    const rails: number[] = [];
+    for (let x = -GRID_HALF; x <= GRID_HALF; x += 8) {
+      rails.push(x, GROUND_Y, NEAR, x, GROUND_Y, FAR);
+      rails.push(x, CEIL_Y, NEAR, x, CEIL_Y, FAR);
+    }
+    const railGeo = new THREE.BufferGeometry();
+    railGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(rails), 3));
+    scene.add(new THREE.LineSegments(railGeo, this.groundMat));
+    // 横線（x方向・手前へ流れる）：スピード感。1本の線材で床と天井を同時に描く。
+    const rowGeo = new THREE.BufferGeometry();
+    rowGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array([
+      -GRID_HALF, GROUND_Y, 0, GRID_HALF, GROUND_Y, 0,
+      -GRID_HALF, CEIL_Y, 0, GRID_HALF, CEIL_Y, 0,
+    ]), 3));
+    for (let i = 0; i < GROUND_ROWS; i++) {
+      const line = new THREE.LineSegments(rowGeo, this.groundMat);
+      line.position.z = -GROUND_SPACING * i;
+      scene.add(line);
+      this.groundLines.push(line);
+    }
+
+    // ── ビル群（両脇。単位キューブ＝半透明の面＋ネオンのエッジ。Group をスケール）──────
+    this.boxGeo = new THREE.BoxGeometry(1, 1, 1);
+    this.boxEdges = new THREE.EdgesGeometry(this.boxGeo);
+    this.fillMat = new THREE.MeshLambertMaterial({
+      color: 0x0a2a44, transparent: true, opacity: 0.8,
+      blending: THREE.NormalBlending, depthWrite: false, fog: true,
+    });
+    this.edgeMat = new THREE.LineBasicMaterial({
+      color: 0x33ddff, transparent: true, opacity: 0.85,
+      blending: THREE.AdditiveBlending, depthWrite: false, fog: true,
+    });
+    // OGポスターでは床/天井のみを使う（ビルは非表示。og-poster用の見た目調整のためコメントアウト）。
+    // for (let i = 0; i < BUILDING_COUNT; i++) {
+    //   const g = new THREE.Group();
+    //   g.add(new THREE.Mesh(this.boxGeo, this.fillMat)); // 半透明の面（陰影で立体感）
+    //   g.add(new THREE.LineSegments(this.boxEdges, this.edgeMat)); // ネオンの輪郭
+    //   this.recycleBuilding(g, true);
+    //   scene.add(g);
+    //   this.buildings.push(g);
+    // }
+
+    // ── 円形HUDのプール（最初は非表示）──
+    for (let i = 0; i < HUD_POOL; i++) {
+      const hud = this.buildHud();
+      hud.group.visible = false;
+      scene.add(hud.group);
+      this.huds.push(hud);
+    }
+  }
+
+  frame(f: AudioFeatures): void {
+    if (!this.renderer || !this.scene || !this.camera) return;
+    this.resize();
+    const dt = 0.016;
+    this.t += dt;
+
+    // 前進スピード：一定の基準＋低音でわずかに加速（BPM連動はしない＝推定が飛ぶと破綻するため）。
+    const speed = (65 + f.bass * 120) * dt;
+
+    // ── 床の横線を手前へ流し、抜けたら最奥へ ──
+    for (const line of this.groundLines) {
+      line.position.z += speed;
+      if (line.position.z > NEAR) line.position.z -= GROUND_ROWS * GROUND_SPACING;
+    }
+
+    // ── ビルを手前へ流し、通り過ぎたら奥で作り直す ── (OGポスターでは無効化。buildingsは常に空)
+    for (const b of this.buildings) {
+      b.position.z += speed;
+      if (b.position.z > NEAR) this.recycleBuilding(b, false);
+    }
+
+    // ── 色（調性）──
+    const hue = f.tonalAngle;
+    this.edgeMat?.color.setHSL(hue, 0.7, 0.55 + (f.beat ? 0.12 : 0)); // ネオンの輪郭
+    this.fillMat?.color.setHSL(hue, 0.6, 0.16);                        // 面は暗めの色かぶり＝塊感
+    this.groundMat?.color.setHSL(hue, 0.6, 0.4);
+    // OGポスター：groundFill（床/天井の面）の色は構築時の固定色 0x04121d を活かすため、
+    // 毎フレームの調性ベース上書きを無効化する（元は this.groundFill?.color.setHSL(hue, 0.6, 0.12)）。
+
+    // ── HUD 出現（拍/キックで、クールダウン付き）──
+    this.hudCooldown -= dt;
+    if ((f.kick || f.beat) && this.hudCooldown <= 0) {
+      this.spawnHud(f);
+      this.hudCooldown = 0.22;
+    }
+    for (const hud of this.huds) {
+      if (!hud.active) continue;
+      const g = hud.group;
+      g.position.z += speed * 1.25;
+      g.rotation.z += hud.spin;
+      hud.arcs.forEach((a, k) => { a.rotation.z += (k % 2 ? -1 : 1) * 0.03; });
+      const dist = NEAR - g.position.z;
+      const op = Math.max(0, Math.min(0.95, dist / 120));
+      hud.mats.forEach((m) => { m.opacity = op; });
+      if (g.position.z > NEAR + 8) { hud.active = false; g.visible = false; }
+    }
+
+    // ── カメラ：低音でロール/上下、キックで軽くシェイク ──
+    if (f.kick) this.shake = 1;
+    this.shake *= 0.85;
+    // OGポスターは静止画なので、床/天井の横線が水平に見えるようロール角は常に0にする
+    // （オリジナルの sin(t*0.25)*0.06 + シェイクの揺れは動画向けの演出なので無効化）。
+    this.camera.rotation.z = 0;
+    // 左右も中央（道の中心線=x0）に固定する
+    // （オリジナルの sin(t*0.2)*3 は動画向けの左右の揺れなので静止画では使わない）。
+    this.camera.position.x = 0;
+    // 天井/床が上下対称に見えるよう、カメラの高さを両者のちょうど中間に固定する
+    // （オリジナルの 2 + cos(t*0.17)*1.2 + f.bass*1.5 は動画向けの上下揺れなので静止画では使わない）。
+    this.camera.position.y = (GROUND_Y + CEIL_Y) / 2;
+
+    this.renderer.render(this.scene, this.camera);
+  }
+
+  // ── 生成ヘルパー ─────────────────────────────────────────────
+
+  /** ビルを奥でランダムに作り直す（両脇、道の外側に建つ）。 */
+  private recycleBuilding(b: THREE.Group, anywhere: boolean): void {
+    const w = 6 + Math.random() * 16;
+    const d = 6 + Math.random() * 16;
+    const hgt = 10 + Math.random() * 52;
+    b.scale.set(w, hgt, d);
+    const side = Math.random() < 0.5 ? -1 : 1;
+    const x = side * (ROAD_HALF + 2 + Math.random() * 52);
+    const z = anywhere ? -Math.random() * Math.abs(FAR) : FAR + Math.random() * 60;
+    b.position.set(x, GROUND_Y + hgt / 2, z); // 底を床に接地
+    b.rotation.y = (Math.random() - 0.5) * 0.4;
+  }
+
+  private circleLoop(radius: number, seg: number, mat: THREE.LineBasicMaterial): THREE.LineLoop {
+    const p = new Float32Array(seg * 3);
+    for (let i = 0; i < seg; i++) {
+      const a = (i / seg) * Math.PI * 2;
+      p[i * 3] = Math.cos(a) * radius;
+      p[i * 3 + 1] = Math.sin(a) * radius;
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.BufferAttribute(p, 3));
+    return new THREE.LineLoop(g, mat);
+  }
+
+  private ticks(r0: number, r1: number, count: number, mat: THREE.LineBasicMaterial): THREE.LineSegments {
+    const p = new Float32Array(count * 2 * 3);
+    for (let i = 0; i < count; i++) {
+      const a = (i / count) * Math.PI * 2;
+      const c = Math.cos(a), s = Math.sin(a);
+      p[i * 6] = c * r0; p[i * 6 + 1] = s * r0;
+      p[i * 6 + 3] = c * r1; p[i * 6 + 4] = s * r1;
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.BufferAttribute(p, 3));
+    return new THREE.LineSegments(g, mat);
+  }
+
+  private arcLine(radius: number, a0: number, a1: number, seg: number, mat: THREE.LineBasicMaterial): THREE.Line {
+    const p = new Float32Array((seg + 1) * 3);
+    for (let i = 0; i <= seg; i++) {
+      const a = a0 + (a1 - a0) * (i / seg);
+      p[i * 3] = Math.cos(a) * radius;
+      p[i * 3 + 1] = Math.sin(a) * radius;
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.BufferAttribute(p, 3));
+    return new THREE.Line(g, mat);
+  }
+
+  /** 攻殻風の円形HUD（同心円＋目盛り＋回る弧＋クロスヘア）。 */
+  private buildHud(): Hud {
+    const group = new THREE.Group();
+    const mats: THREE.LineBasicMaterial[] = [];
+    const newMat = (opacity: number): THREE.LineBasicMaterial => {
+      const m = new THREE.LineBasicMaterial({
+        color: 0x66ffff, transparent: true, opacity,
+        blending: THREE.AdditiveBlending, depthWrite: false, fog: true,
+      });
+      mats.push(m);
+      return m;
+    };
+
+    const mMain = newMat(0.9);
+    group.add(this.circleLoop(10, 96, mMain));
+    group.add(this.circleLoop(7.2, 72, mMain));
+    group.add(this.ticks(9.4, 10.6, 48, mMain));
+
+    const cross = new Float32Array([-3, 0, 0, 3, 0, 0, 0, -3, 0, 0, 3, 0]);
+    const cg = new THREE.BufferGeometry();
+    cg.setAttribute('position', new THREE.BufferAttribute(cross, 3));
+    group.add(new THREE.LineSegments(cg, mMain));
+
+    const mArc = newMat(0.85);
+    const arc1 = this.arcLine(12.5, 0, Math.PI * 0.65, 40, mArc);
+    const arc2 = this.arcLine(12.5, Math.PI, Math.PI * 1.55, 40, mArc);
+    const arc3 = this.arcLine(5.6, Math.PI * 0.2, Math.PI * 1.1, 32, mArc);
+    group.add(arc1, arc2, arc3);
+
+    return { group, mats, arcs: [arc1, arc2, arc3], active: false, spin: 0 };
+  }
+
+  private spawnHud(f: AudioFeatures): void {
+    const hud = this.huds.find((h) => !h.active);
+    if (!hud) return;
+    hud.active = true;
+    hud.group.visible = true;
+    hud.group.position.set((Math.random() - 0.5) * 26, 2 + (Math.random() - 0.5) * 16, FAR * 0.72);
+    hud.group.rotation.z = Math.random() * Math.PI;
+    hud.group.scale.setScalar(0.7 + Math.random() * 0.6);
+    hud.spin = (Math.random() - 0.5) * 0.04;
+    const hue = (f.tonalAngle + 0.5) % 1;
+    hud.mats.forEach((m) => m.color.setHSL(hue, 0.8, 0.6));
+  }
+
+  private resize(): void {
+    const c = this.container!;
+    const w = Math.max(1, c.clientWidth);
+    const h = Math.max(1, c.clientHeight);
+    if (w === this.w && h === this.h) return;
+    this.w = w;
+    this.h = h;
+    this.renderer!.setSize(w, h, false);
+    this.camera!.aspect = w / h;
+    this.camera!.updateProjectionMatrix();
+  }
+
+  unmount(): void {
+    this.scene?.traverse((o) => {
+      const any = o as unknown as { geometry?: THREE.BufferGeometry; material?: THREE.Material };
+      any.geometry?.dispose?.();
+      any.material?.dispose?.();
+    });
+    this.boxEdges?.dispose();
+    this.boxGeo?.dispose();
+    this.renderer?.dispose();
+    this.renderer?.domElement.remove();
+    this.renderer = null;
+    this.scene = null;
+    this.camera = null;
+    this.buildings = [];
+    this.boxGeo = null;
+    this.boxEdges = null;
+    this.edgeMat = null;
+    this.fillMat = null;
+    this.groundLines = [];
+    this.groundMat = null;
+    this.groundFill = null;
+    this.huds = [];
+    this.container = null;
+  }
+}

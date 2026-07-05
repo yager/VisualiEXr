@@ -10,7 +10,9 @@
     "build": "node build.mjs",
     "watch": "node build.mjs --watch",
     "start": "node build.mjs && electron electron/main.cjs",
-    "serve:web": "npx serve dist-web"
+    "serve:web": "npx serve dist-web",
+    "build:poster": "node tools/og-poster/build.mjs",
+    "typecheck:poster": "tsc -p tools/og-poster/tsconfig.json"
   },
   "devDependencies": {
     "@types/chrome": "^0.2.0",

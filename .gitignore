@@ -4,6 +4,9 @@ dist-app/
 dist-web/
 src/app/plugins.generated.ts
 
+# 非公開の内部ツール（OG画像ビルダー）のビルド成果物。TSソースはcommit対象。
+tools/og-poster/dist/
+
 # OS / editor
 .DS_Store
 *.log

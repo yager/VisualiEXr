@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>VisualiEXr OG Poster Builder（内部ツール・非公開）</title>
+<style>
+  html, body {
+    margin: 0; padding: 24px; background: #111; color: #eee;
+    font-family: system-ui, sans-serif;
+  }
+  h1 { font-size: 1.1rem; font-weight: 600; }
+  p.note { color: #999; font-size: 0.85rem; max-width: 640px; }
+  #status { margin: 12px 0; color: #9cf; font-size: 0.9rem; }
+  #master {
+    display: block; max-width: 960px; width: 100%; height: auto;
+    background: #000; border: 1px solid #333; margin-top: 12px;
+  }
+  .buttons { margin-top: 16px; display: flex; gap: 10px; }
+  button {
+    font: inherit; padding: 10px 18px; border-radius: 6px; border: 1px solid #444;
+    background: #222; color: #eee; cursor: pointer;
+  }
+  button:hover { background: #333; }
+</style>
+</head>
+<body>
+<h1>VisualiEXr — OG Poster Builder（内部ツール・非公開）</h1>
+<p class="note">
+  dist-web には含まれない使い捨てツールです。合成パラメータは poster.ts 先頭の
+  CONFIG 定数を編集して調整してください（編集 → ビルド → リロード → Download）。
+</p>
+<div id="status">読み込み中…</div>
+<canvas id="master" width="1920" height="1080"></canvas>
+<div class="buttons">
+  <button id="btn-1920">Download 1920×1080</button>
+  <button id="btn-1200">Download 1200×630</button>
+</div>
+<script>
+  // キャッシュバスティング：通常の location.reload() でも必ず最新の poster.js を読む
+  // （<script src> 直書きだと HTTP キャッシュ済みの古い JS が使われる問題への対処）。
+  // 相対パス（末尾スラッシュ付き /tools/og-poster/ 基準）で dist を参照する。
+  (function () {
+    var s = document.createElement('script');
+    s.src = 'dist/poster.js?t=' + Date.now();
+    document.body.appendChild(s);
+  })();
+</script>
+</body>
+</html>
