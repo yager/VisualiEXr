@@ -15,10 +15,10 @@ const MAX_FIL = 9;   // フィラメント最大数
 
 export default class PlasmaBallVisualizer implements Visualizer {
   readonly id = 'plasma-ball';
-  readonly name = 'Plasma Ball (2D)';
+  readonly name = 'Plasma Ball (2D Basics)';
   readonly author = 'VisualiEXr';
   readonly description = 'フラクタル放電のプラズマボール。拍で稲妻が飛ぶ';
-  readonly order = 36;
+  readonly order = 11;
 
   private w = 0;
   private h = 0;

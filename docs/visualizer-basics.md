@@ -191,7 +191,7 @@ three.js のような**シーングラフ**型ライブラリの構成要素。
 - **リッチ描画の2経路**：
   - **内蔵プラグイン**（`src/visualizers/`）は `import * as PIXI from 'pixi.js'` のように**直接importしてバンドル同梱**（拡張・スタンドアロン両方に載る）。例：[PixiNeonVisualizer.ts](../src/visualizers/PixiNeonVisualizer.ts)（pixi-filters のフィルタも使用）。
   - **スタンドアロンのフォルダプラグイン**は、ホストが `window.MV.THREE` / `window.MV.PIXI` で提供するので同梱不要。例：[three-orb.js](../examples/plugins/three-orb.js)。
-  - **GLSL一枚芸**は生WebGL＝ライブラリ不要（バンドルほぼ増えない）。[shaderSurface.ts](../src/visualizers/shaderSurface.ts) を土台に**フラグメントシェーダ本体だけ**書けばよい。例：[PlasmaVisualizer.ts](../src/visualizers/PlasmaVisualizer.ts)。
+  - **GLSL一枚芸**は生WebGL＝ライブラリ不要（バンドルほぼ増えない）。[shaderSurface.ts](../src/visualizers/shaderSurface.ts) を土台に**フラグメントシェーダ本体だけ**書けばよい。例：[ChromaFlowVisualizer.ts](../src/visualizers/ChromaFlowVisualizer.ts)。
 - **音を絵に繋ぐ = uniform**：`AudioFeatures`（`bass` `beat` `tonalAngle` …、[features.md](features.md)）を、シェーダなら **uniform** として毎フレーム渡し、3D/2Dなら位置・色・スケールに掛ける。**「解析済みの音データ × GPU描画」がこのプロジェクトの強み**。
 
 イメージ（フラグメントシェーダに音を渡す例・擬似コード）:

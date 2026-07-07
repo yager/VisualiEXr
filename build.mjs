@@ -10,6 +10,7 @@ generatePlugins();
 mkdirSync('dist-extension', { recursive: true });
 mkdirSync('dist-app', { recursive: true });
 mkdirSync('dist-web', { recursive: true });
+mkdirSync('dist-web/gallery', { recursive: true });
 
 // ── 拡張ホスト（Chrome/YouTube）→ dist-extension/ ──
 cpSync('public/manifest.json', 'dist-extension/manifest.json');
@@ -57,6 +58,20 @@ const web = {
   logLevel: 'info',
 };
 
+// ── プラグインギャラリー（/gallery/）→ dist-web/gallery/ ──
+// 本サイト（main.ts / index.html）とは完全に独立した別ページ・別バンドル。
+cpSync('src/hosts/web/gallery/index.html', 'dist-web/gallery/index.html');
+// サムネイル（無ければ空。thumbs/.gitkeep のみでも壊れないようrecursiveコピー）。
+cpSync('src/hosts/web/gallery/thumbs', 'dist-web/gallery/thumbs', { recursive: true });
+const gallery = {
+  entryPoints: ['src/hosts/web/gallery/gallery.ts'],
+  bundle: true,
+  outfile: 'dist-web/gallery/gallery.js',
+  format: 'iife',
+  target: 'chrome120',
+  logLevel: 'info',
+};
+
 if (watch) {
   const ctx = await esbuild.context(extension);
   await ctx.watch();
@@ -65,5 +80,6 @@ if (watch) {
   await esbuild.build(extension);
   await esbuild.build(standalone);
   await esbuild.build(web);
-  console.log('built -> dist-extension/ (拡張) , dist-app/ (Electron) , dist-web/ (Web版デモ)');
+  await esbuild.build(gallery);
+  console.log('built -> dist-extension/ (拡張) , dist-app/ (Electron) , dist-web/ (Web版デモ+ギャラリー)');
 }

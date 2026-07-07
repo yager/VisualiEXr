@@ -26,7 +26,7 @@ export default class FlowFieldVisualizer implements Visualizer {
   readonly name = 'Flow Field (Chill)';
   readonly author = 'VisualiEXr';
   readonly description = 'chill：流れ場に沿って粒子が漂い軌跡を残す';
-  readonly order = 38;
+  readonly order = 21;
 
   private particles: Particle[] = [];
   private w = 0;

@@ -116,7 +116,7 @@ export default class LofiRainVisualizer implements SurfaceVisualizer {
   readonly name = 'Lo-Fi Rain (Chill)';
   readonly author = 'VisualiEXr';
   readonly description = 'chill：雨の窓ごしの街灯り。半透過で映像も透ける';
-  readonly order = 37;
+  readonly order = 20;
 
   private surface: ShaderSurface | null = null;
 

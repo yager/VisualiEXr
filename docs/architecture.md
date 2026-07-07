@@ -50,7 +50,7 @@ The core idea is the **"feature bus"**: plugins never touch the raw `AnalyserNod
 | [`src/visualizers/LofiRainVisualizer.ts`](../src/visualizers/LofiRainVisualizer.ts) | Chill: city lights through a rainy window (audio only affects texture; translucent) |
 | [`src/visualizers/FlowFieldVisualizer.ts`](../src/visualizers/FlowFieldVisualizer.ts) | Chill: particle trails following a flow field (Canvas2D) |
 | [`src/visualizers/ThreeTerrainVisualizer.ts`](../src/visualizers/ThreeTerrainVisualizer.ts) | A three.js (3D) flight over audio-driven terrain (custom surface, SurfaceVisualizer) |
-| [`src/visualizers/PlasmaVisualizer.ts`](../src/visualizers/PlasmaVisualizer.ts) | "Chroma Flow" — a single-shader GLSL piece where color flows like plasma (raw WebGL, no library, transparent) |
+| [`src/visualizers/ChromaFlowVisualizer.ts`](../src/visualizers/ChromaFlowVisualizer.ts) | "Chroma Flow" — a single-shader GLSL piece where color flows like plasma (raw WebGL, no library, transparent) |
 | [`src/visualizers/TunnelVisualizer.ts`](../src/visualizers/TunnelVisualizer.ts) | A single-shader GLSL grid tunnel (raw WebGL, no library, transparent) |
 | [`src/visualizers/shaderSurface.ts`](../src/visualizers/shaderSurface.ts) | A reusable base for fullscreen fragment shaders (not `*Visualizer.ts`, so excluded from auto-registration) |
 | [`src/visualizers/AnalyzerVisualizer.ts`](../src/visualizers/AnalyzerVisualizer.ts) | An analysis/debug display that lays out AudioFeatures on screen (UI name "Analyzer (All Features)", id=`analyzer`) |
@@ -287,6 +287,23 @@ npm run serve:web   # = npx serve dist-web (for local checks)
 - See [`.github/workflows/deploy-web.yml`](../.github/workflows/deploy-web.yml) for publishing to GitHub Pages
   (requires a one-time manual step: set the repository's Settings > Pages > Source to "GitHub Actions")
 - Because github.io serves from a subpath (`username.github.io/repo-name/`), asset references inside `dist-web/` use relative paths
+
+#### Checking the plugin gallery (`/gallery/`)
+
+A page that lists the built-in visualizers, with a live preview on hover and an enlarged view on click ([`src/hosts/web/gallery/`](../src/hosts/web/gallery/)).
+It's a fully independent page with no dependency on `main.ts` (the landing page demo), built as part of `npm run build` and output to `dist-web/gallery/`.
+
+```bash
+npm run build
+npx serve dist-web   # serve dist-web/ as the root (required, since paths are relative)
+```
+
+Open `http://localhost:3000/gallery/` against the printed URL (**the trailing slash is required** — without it, the relative path to `gallery.js` fails to load).
+
+- At rest: shows a placeholder (gradient + name) automatically when `thumbs/<id>.png` is missing. To add a thumbnail, drop a PNG named after the visualizer's `id` (see [`registry.list()`](../src/app/registry.ts)) into `src/hosts/web/gallery/thumbs/` and rebuild
+- Hover: only that one card goes live (always at most one; hovering a different card disposes the previous one)
+- Click/tap: opens an enlarged lightbox. Close via the close button, background click, or Escape
+- No microphone needed. Driven by a synthetic `AudioFeatures` loop from [`gallery/features.ts`](../src/hosts/web/gallery/features.ts)
 
 ---
 

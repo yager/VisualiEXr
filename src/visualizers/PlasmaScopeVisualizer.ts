@@ -13,10 +13,10 @@ import { Visualizer, VisualizerContext } from './Visualizer';
  */
 export default class PlasmaScopeVisualizer implements Visualizer {
   readonly id = 'plasma-scope';
-  readonly name = 'Plasma Scope (Waveform)';
+  readonly name = 'Plasma Scope (2D Basics)';
   readonly author = 'VisualiEXr';
   readonly description = '波形をキーで回す放電風オシロ＋反応する中央リング';
-  readonly order = 35;
+  readonly order = 10;
 
   private w = 0;
   private h = 0;

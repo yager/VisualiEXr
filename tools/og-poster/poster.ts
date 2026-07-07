@@ -1,6 +1,6 @@
 import { AudioFeatures } from '../../src/audio/AudioFeatures';
 import { SurfaceVisualizer } from '../../src/visualizers/Visualizer';
-import PlasmaVisualizer from './vendored/PlasmaVisualizer';
+import ChromaFlowVisualizer from './vendored/ChromaFlowVisualizer';
 import CyberFlightVisualizer from './vendored/CyberFlightVisualizer';
 import PixiNeonVisualizer from './vendored/PixiNeonVisualizer';
 import { makePosterFeatures } from './features';
@@ -190,7 +190,7 @@ async function main(): Promise<void> {
   const cyberContainer = makeOffscreenContainer('og-layer-cyber');
   const pixiContainer = makeOffscreenContainer('og-layer-pixi');
 
-  const chroma = new PlasmaVisualizer();
+  const chroma = new ChromaFlowVisualizer();
   const cyber = new CyberFlightVisualizer();
   const pixi = new PixiNeonVisualizer();
 

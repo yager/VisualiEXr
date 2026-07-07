@@ -1,18 +1,11 @@
-import { AudioFeatures } from '../audio/AudioFeatures';
-import { SurfaceVisualizer } from './Visualizer';
+/**
+ * ChromaFlowVisualizer（og-poster用コピー）— 元は src/visualizers/ChromaFlowVisualizer.ts。
+ * ロジックはオリジナルと同一。キャプチャ対応の ShaderSurface コピー（./shaderSurface）を使うだけ。
+ */
+import { AudioFeatures } from '../../../src/audio/AudioFeatures';
+import { SurfaceVisualizer } from '../../../src/visualizers/Visualizer';
 import { ShaderSurface } from './shaderSurface';
 
-/**
- * PlasmaVisualizer — GLSL「一枚芸」の入門サンプル（生WebGL・ライブラリ不要＝バンドルほぼ増えない）。
- *
- * 全画面フラグメントシェーダで、正弦の重ね合わせによる流れる色場（プラズマ）を描く。
- * AudioFeatures を uniform で渡すだけで音に反応する見本：
- *   uTonalAngle→色、uFlux→流れる速さ、uBass→露出（アルファ）、uBeat→拍の閃光。
- * **明るい筋だけを不透明に乗せ、暗い所は透明**にするので、下の動画が透けて見える
- *   （アルファ＝模様の強さ。方法A「明るい所だけ乗せる」）。
- * シェーダ本体は下の FRAG。土台は ShaderSurface（[shaderSurface.ts](./shaderSurface.ts)）。
- * 用語（シェーダ/uniform/UV 等）は docs/visualizer-basics.md 参照。
- */
 const FRAG = `
 precision highp float;
 uniform vec2 uResolution;
@@ -33,11 +26,12 @@ void main() {
   p.x *= uResolution.x / uResolution.y; // アスペクト補正
 
   float t = uTime * (0.3 + uFlux * 1.5);
-  // 正弦の重ね合わせ＝プラズマ
-  float v = sin(p.x * 6.0 + t)
-          + sin(p.y * 6.0 + t * 1.3)
-          + sin((p.x + p.y) * 4.0 + t * 0.7)
-          + sin(length(p) * 8.0 - t * 2.0);
+  // 正弦の重ね合わせ＝流れる色場
+  // OGポスター用調整：空間周波数を上げて模様を細かくしている（オリジナルは 6.0/6.0/4.0/8.0）。
+  float v = sin(p.x * 15.0 + t)
+          + sin(p.y * 15.0 + t * 1.3)
+          + sin((p.x + p.y) * 10.0 + t * 0.7)
+          + sin(length(p) * 20.0 - t * 2.0);
   v *= 0.25; // おおむね -1..1 に
 
   float pattern = 0.55 + 0.45 * v;                   // 模様の強さ（0.1..1）
@@ -50,7 +44,7 @@ void main() {
 }
 `;
 
-export default class PlasmaVisualizer implements SurfaceVisualizer {
+export default class ChromaFlowVisualizer implements SurfaceVisualizer {
   readonly id = 'plasma';
   readonly name = 'Chroma Flow (GLSL)';
   readonly author = 'VisualiEXr';

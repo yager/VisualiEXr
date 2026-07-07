@@ -18,7 +18,7 @@ export default class AnalyzerVisualizer implements Visualizer {
   readonly name = 'Analyzer (All Features)';
   readonly author = 'VisualiEXr';
   readonly description = 'AudioFeatures を一覧表示する分析/デバッグ画面';
-  readonly order = 10;
+  readonly order = 2;
 
   // ランプの点灯を少し持続させて、一瞬の発火を目で追えるようにする（キー=行ラベル+名前 → 最後に光った時刻）
   private lampHold: Record<string, number> = {};

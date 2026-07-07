@@ -50,7 +50,7 @@ TimeDomain ─────────────┴─▶ FeatureEngine.update
 | [`src/visualizers/LofiRainVisualizer.ts`](../src/visualizers/LofiRainVisualizer.ts) | chill：雨の窓ごしの街灯り（音は質感のみ・半透過） |
 | [`src/visualizers/FlowFieldVisualizer.ts`](../src/visualizers/FlowFieldVisualizer.ts) | chill：流れ場に沿う粒子の軌跡（Canvas2D） |
 | [`src/visualizers/ThreeTerrainVisualizer.ts`](../src/visualizers/ThreeTerrainVisualizer.ts) | three.js（3D）の音の地形フライト（自前描画面・SurfaceVisualizer） |
-| [`src/visualizers/PlasmaVisualizer.ts`](../src/visualizers/PlasmaVisualizer.ts) | GLSL一枚芸の「Chroma Flow」＝色が流れるプラズマ（生WebGL・ライブラリ不要・透過） |
+| [`src/visualizers/ChromaFlowVisualizer.ts`](../src/visualizers/ChromaFlowVisualizer.ts) | GLSL一枚芸の「Chroma Flow」＝色が流れるプラズマ（生WebGL・ライブラリ不要・透過） |
 | [`src/visualizers/TunnelVisualizer.ts`](../src/visualizers/TunnelVisualizer.ts) | GLSL一枚芸の格子トンネル（生WebGL・ライブラリ不要・透過） |
 | [`src/visualizers/shaderSurface.ts`](../src/visualizers/shaderSurface.ts) | 全画面フラグメントシェーダの再利用土台（`*Visualizer.ts`ではないので自動登録対象外） |
 | [`src/visualizers/AnalyzerVisualizer.ts`](../src/visualizers/AnalyzerVisualizer.ts) | AudioFeatures を画面に並べる分析/デバッグ表示（UI名 "Analyzer (All Features)"、id=`analyzer`） |
@@ -287,6 +287,23 @@ npm run serve:web   # = npx serve dist-web（ローカル確認用）
 - GitHub Pages への公開は [`.github/workflows/deploy-web.yml`](../.github/workflows/deploy-web.yml) を参照
   （要・人間の作業: リポジトリの Settings > Pages > Source を "GitHub Actions" に変更）
 - github.io はサブパス配信（`username.github.io/リポジトリ名/`）になるため、`dist-web/` 内の資産参照は相対パス
+
+#### プラグインギャラリー（`/gallery/`）の確認方法
+
+内蔵ビジュアライザを一覧表示し、ホバーでライブプレビュー・クリックで拡大表示するページ（[`src/hosts/web/gallery/`](../src/hosts/web/gallery/)）。
+`main.ts`（ランディングのデモ）には一切依存しない独立ページで、`npm run build` に含まれて `dist-web/gallery/` へ出力される。
+
+```bash
+npm run build
+npx serve dist-web   # dist-web/ をルートにして配信（相対パスのため必須）
+```
+
+表示されたURLに対して `http://localhost:3000/gallery/` を開く（**末尾のスラッシュ必須**。無いと相対パスの `gallery.js` が読み込めない）。
+
+- 静止時：`thumbs/<id>.png` が無ければ自動でプレースホルダ（グラデ＋名前）表示。サムネイルを用意する場合はビジュアライザの `id`（[`registry.list()`](../src/app/registry.ts) 参照）と同名のPNGを `src/hosts/web/gallery/thumbs/` に置いて再ビルドする
+- ホバー：その1枚だけライブ再生（常に最大1枚。別カードにホバーすると前は破棄）
+- クリック/タップ：拡大ライトボックス。閉じるボタン/背景クリック/Escで閉じる
+- マイク不要。[`gallery/features.ts`](../src/hosts/web/gallery/features.ts) の合成 `AudioFeatures` ループで駆動
 
 ---
 

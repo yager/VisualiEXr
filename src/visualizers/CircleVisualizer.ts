@@ -15,7 +15,7 @@ export default class CircleVisualizer implements Visualizer {
   readonly name = 'Circle (2D Basics)';
   readonly author = 'VisualiEXr';
   readonly description = '放射状バー＋波形＋調性の色の円';
-  readonly order = 30;
+  readonly order = 4;
 
   private readonly HALF = 64; // 片側の本数（左右あわせて 128本）
 

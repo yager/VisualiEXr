@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Plugin Gallery — VisualiEXr</title>
+<meta name="description" content="VisualiEXr の内蔵ビジュアライザ一覧。カードにマウスを乗せるとライブプレビュー、クリックで拡大表示できます。">
+<link rel="icon" type="image/png" href="../favicon.png">
+<!-- Google Analytics (GA4) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-QBW2TVP5G2"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-QBW2TVP5G2');
+</script>
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #0a0a0f;
+    --fg: #f2f2f7;
+    --muted: #9797a8;
+    --accent: #6ee7ff;
+    --accent2: #ff6ec7;
+    --card: #14141c;
+    --border: #2a2a36;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; background: var(--bg); color: var(--fg);
+    font-family: system-ui, -apple-system, "Segoe UI", "Hiragino Sans", "Noto Sans JP", sans-serif;
+  }
+  a { color: var(--accent); }
+
+  #page { max-width: 1200px; margin: 0 auto; padding: 24px 20px 64px; }
+
+  header.top { text-align: center; margin-bottom: 32px; }
+  a.back { display: inline-block; margin-bottom: 16px; font-size: 0.9rem; color: var(--muted); text-decoration: none; }
+  a.back:hover { color: var(--fg); }
+  header.top h1 {
+    font-size: clamp(1.6rem, 4vw, 2.2rem); margin: 0 0 8px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  header.top p { color: var(--muted); font-size: 0.95rem; margin: 4px 0; }
+  header.top p.en { font-size: 0.85rem; }
+
+  #grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 18px;
+    margin-top: 28px;
+  }
+  .card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+    overflow: hidden; cursor: pointer;
+  }
+  .card .stage {
+    position: relative; width: 100%; aspect-ratio: 16/9; background: #000; overflow: hidden;
+  }
+  .card .stage .thumb, .card .stage .placeholder {
+    position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
+  }
+  .card .stage .placeholder {
+    display: none; align-items: center; justify-content: center; text-align: center; padding: 10px;
+    background: linear-gradient(135deg, #1c1030, #0a0a0f 60%, #14141c);
+    color: var(--fg); font-weight: 600; font-size: 0.95rem;
+  }
+  .card .stage.live .thumb, .card .stage.live .placeholder { opacity: 0; }
+  .card .stage canvas, .card .stage > div.live-container {
+    position: absolute; inset: 0; width: 100%; height: 100%; display: block;
+  }
+  .card .meta { padding: 10px 12px 14px; }
+  .card .meta .name { font-weight: 600; font-size: 0.95rem; }
+  .card .meta .author { color: var(--muted); font-size: 0.78rem; margin-top: 2px; }
+  .card .meta .desc { color: var(--muted); font-size: 0.82rem; margin-top: 6px; line-height: 1.4; }
+
+  #lightbox[hidden] { display: none; }
+  #lightbox {
+    position: fixed; inset: 0; z-index: 20000; background: rgba(5,5,8,0.92);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+    padding: 20px;
+  }
+  #lightbox-stage {
+    position: relative; background: #000; border-radius: 8px; overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+  }
+  #lightbox-stage canvas, #lightbox-stage > div.live-container {
+    position: absolute; inset: 0; width: 100%; height: 100%; display: block;
+  }
+  #lightbox-info { color: var(--fg); text-align: center; max-width: 640px; }
+  #lightbox-info .name { font-weight: 700; font-size: 1.05rem; }
+  #lightbox-info .desc { color: var(--muted); font-size: 0.88rem; margin-top: 4px; }
+  #lightbox-close {
+    position: fixed; top: 18px; right: 22px; font: inherit; font-size: 1.4rem; line-height: 1;
+    background: transparent; color: var(--fg); border: none; cursor: pointer; padding: 8px;
+  }
+  #lightbox-close:hover { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div id="page">
+  <header class="top">
+    <a class="back" href="../">← VisualiEXr</a>
+    <h1>Plugin Gallery</h1>
+    <p>カードにマウスを乗せるとその場でライブ再生、クリックで拡大表示します。</p>
+    <p class="en">Hover a card for a live preview, click to enlarge. On touch devices, tap to open.</p>
+  </header>
+
+  <div id="grid"></div>
+</div>
+
+<div id="lightbox" hidden>
+  <button id="lightbox-close" aria-label="閉じる / Close">✕</button>
+  <div id="lightbox-stage"></div>
+  <div id="lightbox-info">
+    <div class="name" id="lightbox-name"></div>
+    <div class="desc" id="lightbox-desc"></div>
+  </div>
+</div>
+
+<script src="gallery.js"></script>
+</body>
+</html>
