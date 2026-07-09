@@ -1,6 +1,6 @@
 {
   "name": "visualiexr",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "プラグイン式の音楽ビジュアライザ（特徴量エンジン + プラグイン機構）",
   "type": "module",
   "main": "electron/main.cjs",

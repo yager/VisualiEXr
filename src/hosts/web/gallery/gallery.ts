@@ -16,7 +16,6 @@ import { makeDemoFeatures } from './features';
 const CARD_W = 320;
 const CARD_H = 180;
 const HOVER_DEBOUNCE_MS = 120;
-const MAX_DPR = 1.5;
 
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const hasFineHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
@@ -31,7 +30,7 @@ function startLive(id: string, host: HTMLElement, width: number, height: number)
   const v: AnyVisualizer | null = registry.create(id);
   if (!v) return null;
 
-  const dpr = Math.min(window.devicePixelRatio || 1, MAX_DPR);
+  const dpr = window.devicePixelRatio || 1;
   const t0 = performance.now();
   let raf = 0;
 

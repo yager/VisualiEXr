@@ -12,6 +12,8 @@ mkdirSync('dist-app', { recursive: true });
 mkdirSync('dist-web', { recursive: true });
 mkdirSync('dist-web/gallery', { recursive: true });
 
+const esbuildSvgText = { loader: { '.svg': 'text' } };
+
 // ── 拡張ホスト（Chrome/YouTube）→ dist-extension/ ──
 cpSync('public/manifest.json', 'dist-extension/manifest.json');
 cpSync('public/icons', 'dist-extension/icons', { recursive: true });
@@ -22,6 +24,7 @@ const extension = {
   format: 'iife',
   target: 'chrome110',
   logLevel: 'info',
+  ...esbuildSvgText,
 };
 
 // ── スタンドアロンホスト（Electron）→ dist-app/ ──
@@ -37,6 +40,7 @@ const standalone = {
   format: 'iife',
   target: 'chrome120',
   logLevel: 'info',
+  ...esbuildSvgText,
 };
 
 // ── Web ホスト（GitHub Pages 等の静的配信）→ dist-web/ ──
@@ -56,6 +60,7 @@ const web = {
   format: 'iife',
   target: 'chrome120',
   logLevel: 'info',
+  ...esbuildSvgText,
 };
 
 // ── プラグインギャラリー（/gallery/）→ dist-web/gallery/ ──
@@ -70,6 +75,7 @@ const gallery = {
   format: 'iife',
   target: 'chrome120',
   logLevel: 'info',
+  ...esbuildSvgText,
 };
 
 if (watch) {

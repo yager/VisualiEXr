@@ -23,7 +23,7 @@ export default class BarsVisualizer implements Visualizer {
   readonly name = 'Bars (2D Basics)';
   readonly author = 'VisualiEXr';
   readonly description = '定番の周波数バー。画面下だけで動き映像を邪魔しない';
-  readonly order = 3;
+  readonly order = 4;
 
   private opts: BarsOptions = {
     barCount: 96,
