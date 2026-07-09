@@ -157,7 +157,7 @@ export class ControlPanel {
     const support = document.createElement('a');
     support.className = 'vexr-item vexr-support';
     support.textContent = '♥ Support / 寄付';
-    support.href = 'https://donate.stripe.com/7sY3cw6r7aaI7rIczv18c00';
+    support.href = 'https://ko-fi.com/takahitoyagami';
     support.target = '_blank';
     support.rel = 'noopener noreferrer';
     support.title = '開発を支援する（任意の寄付・新しいタブで開きます）';

@@ -96,7 +96,7 @@ Attribution for the bundled third-party libraries (three.js / PixiJS / pixi-filt
 
 VisualiEXr is free and open source. If you'd like to support continued development, donations of any amount are welcome (no goods or services are provided in return).
 
-- Donate (Stripe): <https://donate.stripe.com/7sY3cw6r7aaI7rIczv18c00>
+- Ko-fi: <https://ko-fi.com/takahitoyagami>
 - GitHub Sponsors: via the **Sponsor** button at the top of the repository (once enabled)
 
 For legal notices, see the web version's (GitHub Pages) [privacy policy / terms of use / commercial transactions act disclosure](https://yager.github.io/VisualiEXr/legal/support/).

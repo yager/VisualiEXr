@@ -96,7 +96,7 @@ MIT License（[LICENSE](LICENSE)）。自由に使用・改変・再配布・商
 
 VisualiEXr は無料・オープンソースです。開発の継続を応援いただける場合は、任意の寄付を歓迎します（対価はありません）。
 
-- 寄付（Stripe）：<https://donate.stripe.com/7sY3cw6r7aaI7rIczv18c00>
+- Ko-fi：<https://ko-fi.com/takahitoyagami>
 - GitHub Sponsors：リポジトリ上部の **Sponsor** ボタンから（有効化後）
 
 法的表記は Web版（GitHub Pages）の [プライバシーポリシー / 利用規約 / 特定商取引法に基づく表記](https://yager.github.io/VisualiEXr/legal/support/) を参照してください。
